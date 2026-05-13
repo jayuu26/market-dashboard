@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Study Dashboard</title>
+<style>
+:root {
+  --bg: #0f1117; --card: #1a1d27; --card2: #22263a; --border: #2d3148;
+  --green: #00d4aa; --red: #ff4757; --yellow: #ffa502; --blue: #3d9bff;
+  --text: #e0e4f0; --muted: #8890b0; --font: 'Segoe UI', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+
+/* Modal */
+#tokenModal { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 1000; align-items: center; justify-content: center; }
+#tokenModal.hidden { display: none; }
+.modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; width: 440px; max-width: 92vw; }
+.modal-box h2 { color: var(--green); margin-bottom: 8px; }
+.modal-box p { color: var(--muted); margin-bottom: 20px; font-size: 13px; line-height: 1.5; }
+.modal-box input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; outline: none; }
+.modal-box input:focus { border-color: var(--green); }
+.modal-actions { display: flex; gap: 10px; }
+
+/* Buttons */
+.btn { cursor: pointer; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; transition: opacity .15s; }
+.btn:hover:not(:disabled) { opacity: .82; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-green { background: var(--green); color: #0f1117; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
+
+/* Header */
+#hdr { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#hdr h1 { font-size: 17px; font-weight: 700; }
+#hdrBias { padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: none; }
+#hdrStatus { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--card2); border: 1px solid var(--border); color: var(--muted); }
+#hdrRight { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+#clock { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* Controls */
+#ctrl { background: var(--card2); border-bottom: 1px solid var(--border); padding: 8px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#ctrl select, #ctrl input[type=date] { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 5px 9px; border-radius: 6px; font-size: 13px; outline: none; }
+#ctrl select:focus, #ctrl input[type=date]:focus { border-color: var(--blue); }
+.sep { width: 1px; height: 20px; background: var(--border); }
+#schedStatus { font-size: 12px; color: var(--muted); }
+.nav-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 26px; height: 26px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+.nav-btn:hover { border-color: var(--blue); }
+
+/* Main */
+#main { padding: 18px 20px; max-width: 1380px; margin: 0 auto; }
+.sec { margin-bottom: 22px; }
+.sec-hd { font-size: 14px; font-weight: 700; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+
+/* Context */
+.ctx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+.ctx-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.ctx-card h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin-bottom: 10px; }
+.ctx-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.03); font-size: 13px; gap: 8px; }
+.ctx-row:last-child { border: none; }
+.ck { color: var(--muted); flex-shrink: 0; }
+.cv { font-weight: 500; text-align: right; word-break: break-word; }
+.bull { color: var(--green); } .bear { color: var(--red); } .neut { color: var(--yellow); }
+
+/* Bias card */
+#biasCard { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+#biasCard .bl { font-size: 11px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin-bottom: 4px; }
+#biasCard .bv { font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+#biasCard .br { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* Setup cards */
+.setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+.sc { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.sc.long { border-left: 3px solid var(--green); }
+.sc.short { border-left: 3px solid var(--red); }
+.sc-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.sc-sym { font-size: 17px; font-weight: 700; }
+.dir-tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; letter-spacing: .4px; }
+.dl { background: rgba(0,212,170,.15); color: var(--green); }
+.ds { background: rgba(255,71,87,.15); color: var(--red); }
+.conf-tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+.cH { background: rgba(0,212,170,.2); color: var(--green); }
+.cM { background: rgba(255,165,2,.2); color: var(--yellow); }
+.cL { background: rgba(255,71,87,.2); color: var(--red); }
+.cmp-box { margin-left: auto; text-align: right; }
+.cmp-box .price { font-size: 16px; font-weight: 700; }
+.cmp-box .vsrc { font-size: 11px; color: var(--green); }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.pill { background: var(--card2); border-radius: 5px; padding: 3px 8px; font-size: 12px; }
+.pill span { color: var(--muted); margin-right: 3px; }
+.sf { margin-bottom: 8px; }
+.sf label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); display: block; margin-bottom: 2px; }
+.sf p { font-size: 13px; line-height: 1.5; }
+.inv { font-size: 12px; color: var(--red); margin-top: 6px; }
+.psz { font-size: 12px; color: var(--muted); margin-top: 5px; }
+.pat { font-size: 12px; color: var(--muted); margin-bottom: 9px; }
+
+/* Best trade */
+#btCard { background: var(--card); border: 2px solid var(--yellow); border-radius: 10px; padding: 18px; }
+#btCard h3 { color: var(--yellow); font-size: 15px; margin-bottom: 12px; }
+
+/* Watchlist */
+.wl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.wc { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 13px; }
+.wc-sym { font-weight: 700; margin-bottom: 7px; }
+.wc-row { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.wc-row strong { color: var(--text); }
+
+/* Scenarios */
+.scen-row { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 9px; display: flex; gap: 11px; align-items: flex-start; }
+.scen-icon { font-size: 18px; flex-shrink: 0; }
+.scen-text { font-size: 13px; line-height: 1.5; }
+
+/* Risk rules */
+#rrCard { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+#rrCard ul { list-style: none; }
+#rrCard li { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 13px; display: flex; gap: 8px; }
+#rrCard li:last-child { border: none; }
+#rrCard li::before { content: '▸'; color: var(--muted); flex-shrink: 0; }
+
+/* Accuracy */
+#accCard { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.acc-row { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+
+/* Quick ref */
+.qr-wrap { overflow-x: auto; }
+.qr-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.qr-tbl th { background: var(--card2); padding: 7px 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); border-bottom: 1px solid var(--border); }
+.qr-tbl td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.qr-tbl tr:hover td { background: rgba(255,255,255,.02); }
+.lr td:first-child { border-left: 2px solid var(--green); }
+.sr td:first-child { border-left: 2px solid var(--red); }
+
+/* Utility */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.15); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { text-align: center; padding: 56px 20px; color: var(--muted); }
+.empty h2 { font-size: 22px; margin-bottom: 8px; color: var(--text); }
+#overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 900; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+#overlay.on { display: flex; }
+#overlay p { color: var(--text); font-size: 15px; }
+#toast { position: fixed; bottom: 22px; right: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 11px 16px; font-size: 13px; z-index: 2000; transform: translateY(70px); opacity: 0; transition: all .25s; max-width: 300px; pointer-events: none; }
+#toast.on { transform: none; opacity: 1; }
+#toast.ok { border-color: var(--green); color: var(--green); }
+#toast.err { border-color: var(--red); color: var(--red); }
+#toast.info { border-color: var(--blue); color: var(--blue); }
+@media (max-width: 600px) { #main { padding: 12px; } #ctrl, #hdr { padding: 8px 12px; } .setup-grid { grid-template-columns: 1fr; } .ctx-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div id="tokenModal" class="hidden">
+  <div class="modal-box">
+    <h2>🔐 GitHub Token</h2>
+    <p>Enter a GitHub Personal Access Token with <strong>repo</strong> scope. Used only to call GitHub's API from your browser — stored only in localStorage.</p>
+    <input type="password" id="tkInput" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+    <div class="modal-actions">
+      <button class="btn btn-green" onclick="saveToken()">Save &amp; Continue</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('tokenModal').classList.add('hidden')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay"><div class="spinner" style="width:36px;height:36px;border-width:3px"></div><p id="overlayMsg">Loading…</p></div>
+<div id="toast"></div>
+
+<div id="hdr">
+  <h1>📊 Market Study</h1>
+  <span id="hdrBias">—</span>
+  <span id="hdrStatus">⏳ —</span>
+  <div id="hdrRight">
+    <span id="clock">—</span>
+    <button class="btn btn-ghost btn-sm" onclick="showTokenModal()">🔑 Token</button>
+  </div>
+</div>
+
+<div id="ctrl">
+  <button class="nav-btn" onclick="shiftDate(-1)" title="Previous">◀</button>
+  <input type="date" id="dp" onchange="onDateChange()">
+  <button class="nav-btn" onclick="shiftDate(1)" title="Next">▶</button>
+  <button class="btn btn-ghost btn-sm" onclick="goToday()">Today</button>
+  <div class="sep"></div>
+  <button class="btn btn-green btn-sm" id="runBtn" onclick="triggerRun()">▶ Run Now</button>
+  <div class="sep"></div>
+  <label style="color:var(--muted);font-size:13px">⏰</label>
+  <select id="schedSel" onchange="onSchedChange(this.value)"><option>Loading…</option></select>
+  <span id="schedStatus"></span>
+</div>
+
+<div id="main">
+  <div id="content"><div class="empty"><div class="spinner" style="width:38px;height:38px;border-width:3px;margin:0 auto 14px"></div><p>Loading…</p></div></div>
+</div>
+
+<script>
+'use strict';
+
+const REPO   = 'jayuu26/Market-Study';
+const WF     = 'main.yml';
+const WF_PATH = '.github/workflows/main.yml';
+const DIR    = 'analyses';
+const API    = 'https://api.github.com';
+
+const SCHEDS = {
+  '9:15 AM IST':  '45 3 * * 1-5',
+  '9:30 AM IST':  '0 4 * * 1-5',
+  '10:00 AM IST': '30 4 * * 1-5',
+  '10:30 AM IST': '0 5 * * 1-5',
+};
+
+let _tok = localStorage.getItem('gh_token') || '';
+let _files = [];
+let _idx = 0;
+let _pollTmr = null;
+let _toastTmr = null;
+
+// ── Token ────────────────────────────────────────────────────────────────────
+function showTokenModal() {
+  document.getElementById('tkInput').value = _tok;
+  document.getElementById('tokenModal').classList.remove('hidden');
+}
+function saveToken() {
+  const v = document.getElementById('tkInput').value.trim();
+  if (!v) return toast('Enter a token', 'err');
+  _tok = v;
+  localStorage.setItem('gh_token', v);
+  document.getElementById('tokenModal').classList.add('hidden');
+  init();
+}
+
+// ── API ──────────────────────────────────────────────────────────────────────
+async function ghGet(path) {
+  const r = await fetch(`${API}/repos/${REPO}/contents/${path}`, {
+    headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!r.ok) throw new Error(`GitHub ${r.status}: ${path}`);
+  return r.json();
+}
+
+async function ghPut(path, content, message, sha) {
+  const body = { message, content: btoa(unescape(encodeURIComponent(content))) };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${API}/repos/${REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || `GitHub PUT ${r.status}`); }
+  return r.json();
+}
+
+async function ghList(path) {
+  const r = await fetch(`${API}/repos/${REPO}/contents/${path}`, {
+    headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!r.ok) return [];
+  const j = await r.json();
+  return Array.isArray(j) ? j : [];
+}
+
+async function ghDispatch() {
+  const r = await fetch(`${API}/repos/${REPO}/actions/workflows/${WF}/dispatches`, {
+    method: 'POST',
+    headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ref: 'main' })
+  });
+  return r.ok;
+}
+
+async function ghLatestRun() {
+  const r = await fetch(`${API}/repos/${REPO}/actions/runs?per_page=1`, {
+    headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!r.ok) return null;
+  const j = await r.json();
+  return j.workflow_runs?.[0] || null;
+}
+
+// ── Decode ───────────────────────────────────────────────────────────────────
+function b64dec(b64) {
+  const bytes = atob(b64.replace(/\n/g, ''));
+  return decodeURIComponent(bytes.split('').map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
+}
+
+// ── Clock ────────────────────────────────────────────────────────────────────
+function tickClock() {
+  document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  }).format(new Date()) + ' IST';
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'info', dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `on ${type}`;
+  clearTimeout(_toastTmr);
+  _toastTmr = setTimeout(() => { el.className = ''; }, dur);
+}
+
+function loading(msg) { document.getElementById('overlayMsg').textContent = msg; document.getElementById('overlay').classList.add('on'); }
+function doneLoading() { document.getElementById('overlay').classList.remove('on'); }
+
+// ── File list ────────────────────────────────────────────────────────────────
+async function loadFileList() {
+  const all = await ghList(DIR);
+  const byDate = {};
+  for (const f of all) {
+    const m = f.name.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m && f.name.endsWith('.md') && f.name !== '.gitkeep') {
+      const d = m[1];
+      if (!byDate[d] || f.name > byDate[d].name) byDate[d] = f;
+    }
+  }
+  _files = Object.entries(byDate).sort((a, b) => b[0].localeCompare(a[0])).map(([date, f]) => ({ date, name: f.name }));
+}
+
+// ── Date nav ─────────────────────────────────────────────────────────────────
+function onDateChange() {
+  const v = document.getElementById('dp').value;
+  const i = _files.findIndex(f => f.date === v);
+  if (i >= 0) { _idx = i; loadAndRender(_files[i].name); }
+  else toast('No analysis for ' + v, 'err');
+}
+function shiftDate(d) {
+  const n = _idx + d;
+  if (n < 0 || n >= _files.length) return toast('No more dates', 'info');
+  _idx = n;
+  document.getElementById('dp').value = _files[n].date;
+  loadAndRender(_files[n].name);
+}
+function goToday() {
+  if (!_files.length) return;
+  _idx = 0;
+  document.getElementById('dp').value = _files[0].date;
+  loadAndRender(_files[0].name);
+}
+
+// ── Load & render ─────────────────────────────────────────────────────────────
+async function loadAndRender(fname) {
+  loading('Loading analysis…');
+  try {
+    const f = await ghGet(`${DIR}/${fname}`);
+    render(b64dec(f.content));
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div class="empty"><h2>⚠️ Load Error</h2><p>${esc(e.message)}</p></div>`;
+    toast(e.message, 'err');
+  } finally { doneLoading(); }
+}
+
+// ── Parser ───────────────────────────────────────────────────────────────────
+function parseMD(md) {
+  const data = { accuracy: '', nifty: [], bnifty: [], global: [], internals: [], longs: [], shorts: [], watchlist: [], bestTrade: {}, scenarios: [], riskRules: [], quickRef: [] };
+  const top = md.split(/\n(?=## )/);
+  for (const sec of top) {
+    const lines = sec.split('\n');
+    const h = lines[0].replace(/^##\s+/, '').trim();
+    const body = lines.slice(1).join('\n');
+    if (/accuracy/i.test(h))        data.accuracy = body;
+    else if (/market context/i.test(h)) parseCtx(body, data);
+    else if (/long setups/i.test(h))    data.longs = parseSetups(body, 'long');
+    else if (/short setups/i.test(h))   data.shorts = parseSetups(body, 'short');
+    else if (/watchlist/i.test(h))      data.watchlist = parseWatchlist(body);
+    else if (/best trade/i.test(h))     data.bestTrade = parseBestTrade(body);
+    else if (/scenarios/i.test(h))      data.scenarios = parseScenarios(body);
+    else if (/risk rules/i.test(h))     data.riskRules = body.split('\n').filter(l => l.trim().startsWith('-')).map(l => l.replace(/^-\s*/, '').trim()).filter(Boolean);
+    else if (/quick ref/i.test(h))      data.quickRef = parseQR(body);
+  }
+  return data;
+}
+
+function parseCtx(body, data) {
+  const subs = body.split(/\n(?=### )/);
+  for (const s of subs) {
+    const ls = s.split('\n');
+    const h = ls[0].replace(/^###\s+/, '').trim();
+    const rows = parseTbl(ls.slice(1).join('\n'));
+    if (/nifty 50/i.test(h))    data.nifty = rows;
+    else if (/bank nifty/i.test(h)) data.bnifty = rows;
+    else if (/global/i.test(h))     data.global = rows;
+    else if (/internal/i.test(h))   data.internals = rows;
+  }
+}
+
+function parseTbl(text) {
+  const rows = [];
+  for (const line of text.split('\n')) {
+    if (!line.includes('|') || /^\|[-| ]+\|$/.test(line.trim())) continue;
+    const cols = line.split('|').map(c => c.replace(/\*\*/g, '').trim()).filter(Boolean);
+    if (cols.length >= 2 && cols[0] !== 'Parameter' && cols[0] !== '#' && cols[0] !== 'Stock') rows.push({ key: cols[0], val: cols[1] });
+  }
+  return rows;
+}
+
+function parseSetups(body, dir) {
+  const setups = [];
+  for (const blk of body.split(/\n(?=### )/)) {
+    if (!blk.trim()) continue;
+    const lines = blk.split('\n');
+    const sym = lines[0].match(/:\s*([A-Z&0-9]+)/)?.[1];
+    if (!sym) continue;
+    const s = { sym, dir, fields: {}, technical: '', fundamental: '', invalidation: '', pattern: '', posSize: '', confidence: '', cmp: '', verified: false };
+    let mode = '';
+    for (let i = 1; i < lines.length; i++) {
+      const ln = lines[i].trim();
+      if (ln.startsWith('> ✅')) {
+        s.verified = true;
+        const m = ln.match(/Rs([\d,.]+)/);
+        if (m) s.cmp = m[1];
+        mode = '';
+      } else if (ln === '**Technical:**')     { mode = 'tech'; }
+      else if (ln === '**Fundamental:**')      { mode = 'fund'; }
+      else if (ln.startsWith('**Pattern:**'))  { s.pattern = ln.replace('**Pattern:**', '').trim(); mode = ''; }
+      else if (ln.startsWith('**Invalidation:**')) { s.invalidation = ln.replace('**Invalidation:**', '').trim(); mode = ''; }
+      else if (ln.startsWith('**Position Size:**')) { s.posSize = ln.replace('**Position Size:**', '').trim(); mode = ''; }
+      else if (ln.startsWith('**') && ln.endsWith('**')) { mode = ''; }
+      else if (ln.includes('|') && !/^[|-]+$/.test(ln)) {
+        mode = '';
+        const cols = ln.split('|').map(c => c.replace(/\*\*/g, '').trim()).filter(Boolean);
+        if (cols.length >= 2 && cols[0] !== 'Parameter') {
+          s.fields[cols[0]] = cols[1];
+          if (cols[0] === 'Confidence') s.confidence = cols[1];
+          if (cols[0] === 'CMP' && !s.cmp) s.cmp = cols[1].replace(/[^\d.]/g, '');
+        }
+      } else if (ln && mode === 'tech') { s.technical += (s.technical ? ' ' : '') + ln; }
+      else if (ln && mode === 'fund')   { s.fundamental += (s.fundamental ? ' ' : '') + ln; }
+    }
+    setups.push(s);
+  }
+  return setups;
+}
+
+function parseWatchlist(body) {
+  const items = [];
+  for (const chunk of body.split(/\n(?=\*\*[A-Z])/)) {
+    if (!chunk.trim()) continue;
+    const lines = chunk.split('\n');
+    const sym = lines[0].match(/\*\*([A-Z&0-9]+)\*\*/)?.[1];
+    if (!sym) continue;
+    const pm = lines[0].match(/Rs([\d,.]+)/);
+    const item = { sym, price: pm?.[1] || null, verified: lines[0].includes('✅'), fields: {} };
+    for (const l of lines.slice(1)) {
+      const m = l.trim().match(/^- \*\*([^*]+)\*\*:\s*(.*)/);
+      if (m) item.fields[m[1]] = m[2];
+    }
+    items.push(item);
+  }
+  return items;
+}
+
+function parseBestTrade(body) {
+  const t = {};
+  for (const line of body.split('\n')) {
+    const m = line.trim().match(/^\*\*([^*]+)\*\*:\s*(.*)/);
+    if (m) t[m[1]] = m[2];
+  }
+  return t;
+}
+
+function parseScenarios(body) {
+  const items = [];
+  for (const line of body.split('\n')) {
+    const s = line.trim();
+    const txt = s.replace(/\*\*[^*]*\*\*/g, '').replace(/[🟢🔴🟡]/g, '').trim();
+    if (s.includes('🟢')) items.push({ icon: '🟢', txt, type: 'bull' });
+    else if (s.includes('🔴')) items.push({ icon: '🔴', txt, type: 'bear' });
+    else if (s.includes('🟡')) items.push({ icon: '🟡', txt, type: 'neut' });
+  }
+  return items;
+}
+
+function parseQR(body) {
+  const rows = [];
+  for (const line of body.split('\n')) {
+    if (!line.includes('|') || /^[|-]+$/.test(line.trim())) continue;
+    const cols = line.split('|').map(c => c.replace(/[✅📡*]/g, '').trim()).filter(Boolean);
+    if (cols.length >= 5 && /^\d+$/.test(cols[0])) {
+      rows.push({ num: cols[0], sym: cols[1], dir: cols[2], cmp: cols[3], src: cols[4], entry: cols[5] || '-', sl: cols[6] || '-', t1: cols[7] || '-', t2: cols[8] || '-', rr: cols[9] || '-', conf: cols[10] || '-' });
+    }
+  }
+  return rows;
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function colorV(v) {
+  const s = String(v || '');
+  if (/bullish|strong|buy/i.test(s))  return `<span class="bull">${esc(s)}</span>`;
+  if (/bearish|weak|sell/i.test(s))   return `<span class="bear">${esc(s)}</span>`;
+  if (/sideways|neutral|mixed/i.test(s)) return `<span class="neut">${esc(s)}</span>`;
+  return esc(s);
+}
+
+function render(md) {
+  const d = parseMD(md);
+
+  // Update header bias badge
+  const biasRow = d.internals.find(r => /overall market bias/i.test(r.key));
+  if (biasRow) {
+    const el = document.getElementById('hdrBias');
+    const bias = biasRow.val;
+    const isBull = /bull/i.test(bias), isBear = /bear/i.test(bias);
+    el.textContent = bias;
+    el.style.cssText = `display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;` +
+      `background:${isBull ? 'rgba(0,212,170,.2)' : isBear ? 'rgba(255,71,87,.2)' : 'rgba(255,165,2,.2)'};` +
+      `color:${isBull ? 'var(--green)' : isBear ? 'var(--red)' : 'var(--yellow)'};` +
+      `border:1px solid ${isBull ? 'var(--green)' : isBear ? 'var(--red)' : 'var(--yellow)'}`;
+  }
+
+  let html = '';
+  if (d.accuracy.trim())      html += renderAccuracy(d.accuracy);
+  html += renderCtx(d);
+  if (d.longs.length)         html += renderSetupSec(d.longs, 'long');
+  if (d.shorts.length)        html += renderSetupSec(d.shorts, 'short');
+  if (Object.keys(d.bestTrade).length) html += renderBestTrade(d.bestTrade);
+  if (d.watchlist.length)     html += renderWatchlist(d.watchlist);
+  if (d.scenarios.length)     html += renderScenarios(d.scenarios);
+  if (d.riskRules.length)     html += renderRiskRules(d.riskRules);
+  if (d.quickRef.length)      html += renderQR(d.quickRef);
+
+  document.getElementById('content').innerHTML = html || '<div class="empty"><h2>⚠️</h2><p>Could not parse any sections from this file.</p></div>';
+}
+
+function tblRows(rows) {
+  return rows.map(r => `<div class="ctx-row"><span class="ck">${esc(r.key)}</span><span class="cv">${colorV(r.val)}</span></div>`).join('');
+}
+
+function renderAccuracy(body) {
+  let h = '<div class="sec"><div id="accCard"><div class="sec-hd" style="border:none;margin-bottom:10px">📈 Accuracy Review</div>';
+  for (const line of body.split('\n')) {
+    const s = line.trim();
+    if (!s) continue;
+    if (s.includes('What worked:'))  h += `<div class="acc-row"><span>✅</span><span>${esc(s)}</span></div>`;
+    else if (s.includes('What missed:')) h += `<div class="acc-row"><span>❌</span><span>${esc(s)}</span></div>`;
+    else if (s.includes('Key lesson:'))  h += `<div class="acc-row"><span>🔁</span><span>${esc(s)}</span></div>`;
+  }
+  return h + '</div></div>';
+}
+
+function renderCtx(d) {
+  const biasRow = d.internals.find(r => /overall market bias/i.test(r.key));
+  const biasReason = d.internals.find(r => /bias reason/i.test(r.key));
+  const otherInternals = d.internals.filter(r => !/overall market bias|bias reason/i.test(r.key));
+  const isBull = /bull/i.test(biasRow?.val || ''), isBear = /bear/i.test(biasRow?.val || '');
+
+  const biasCard = biasRow ? `<div id="biasCard">
+    <div class="bl">Overall Market Bias</div>
+    <div class="bv ${isBull ? 'bull' : isBear ? 'bear' : 'neut'}">${esc(biasRow.val)}</div>
+    ${biasReason ? `<div class="br">${esc(biasReason.val)}</div>` : ''}
+  </div>` : '';
+
+  return `<div class="sec"><div class="sec-hd">🌍 Market Context</div>
+    ${biasCard}
+    <div class="ctx-grid">
+      ${d.nifty.length   ? `<div class="ctx-card"><h3>Nifty 50</h3>${tblRows(d.nifty)}</div>` : ''}
+      ${d.bnifty.length  ? `<div class="ctx-card"><h3>Bank Nifty</h3>${tblRows(d.bnifty)}</div>` : ''}
+      ${d.global.length  ? `<div class="ctx-card"><h3>Global Cues</h3>${tblRows(d.global)}</div>` : ''}
+      ${otherInternals.length ? `<div class="ctx-card"><h3>Market Internals</h3>${tblRows(otherInternals)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderSetupSec(setups, dir) {
+  const icon = dir === 'long' ? '📌' : '📉';
+  const label = dir === 'long' ? 'Long' : 'Short';
+  return `<div class="sec"><div class="sec-hd">${icon} ${label} Setups (${setups.length})</div>
+    <div class="setup-grid">${setups.map(renderSetup).join('')}</div>
+  </div>`;
+}
+
+function renderSetup(s) {
+  const cls = s.dir === 'long' ? 'long' : 'short';
+  const dtag = s.dir === 'long' ? '<span class="dir-tag dl">LONG</span>' : '<span class="dir-tag ds">SHORT</span>';
+  const conf = s.confidence.replace(/[-\s].*/, '');
+  const ctag = conf ? `<span class="conf-tag c${conf[0]}">${esc(s.confidence)}</span>` : '';
+  const KEY_FIELDS = ['Entry Range', 'Stop Loss', 'Target 1', 'Target 2', 'Risk Reward', 'Holding'];
+  const pills = KEY_FIELDS.filter(k => s.fields[k]).map(k => `<div class="pill"><span>${esc(k)}:</span>${esc(s.fields[k])}</div>`).join('');
+
+  return `<div class="sc ${cls}">
+    <div class="sc-hd">
+      <span class="sc-sym">${esc(s.sym)}</span>${dtag}${ctag}
+      <div class="cmp-box"><div class="price">₹${esc(s.cmp || '—')}</div>${s.verified ? '<div class="vsrc">✅ NSE Verified</div>' : ''}</div>
+    </div>
+    ${s.pattern ? `<div class="pat">📐 ${esc(s.pattern)}</div>` : ''}
+    <div class="pills">${pills}</div>
+    ${s.technical   ? `<div class="sf"><label>Technical</label><p>${esc(s.technical)}</p></div>` : ''}
+    ${s.fundamental ? `<div class="sf"><label>Fundamental</label><p>${esc(s.fundamental)}</p></div>` : ''}
+    ${s.invalidation ? `<div class="inv">❌ Invalidation: ${esc(s.invalidation)}</div>` : ''}
+    ${s.posSize      ? `<div class="psz">📦 ${esc(s.posSize)}</div>` : ''}
+  </div>`;
+}
+
+function renderBestTrade(t) {
+  const isLong = /long/i.test(t.Direction || '');
+  const clr = isLong ? 'var(--green)' : 'var(--red)';
+  const rows = Object.entries(t).map(([k, v]) => `<div class="ctx-row"><span class="ck">${esc(k)}</span><span class="cv">${colorV(v)}</span></div>`).join('');
+  return `<div class="sec"><div id="btCard"><h3>🏆 Best Trade — ${t.Stock ? `<span style="color:${clr}">${esc(t.Stock)}</span>` : ''}</h3>${rows}</div></div>`;
+}
+
+function renderWatchlist(items) {
+  const cards = items.map(w => {
+    const flds = Object.entries(w.fields).map(([k, v]) => `<div class="wc-row"><strong>${esc(k)}:</strong> ${esc(v)}</div>`).join('');
+    return `<div class="wc"><div class="wc-sym">${esc(w.sym)}${w.verified ? ` <span style="color:var(--green);font-size:11px">✅ ₹${esc(w.price)}</span>` : ' <span style="color:var(--muted);font-size:11px">📡</span>'}</div>${flds}</div>`;
+  }).join('');
+  return `<div class="sec"><div class="sec-hd">👁 Watchlist</div><div class="wl-grid">${cards}</div></div>`;
+}
+
+function renderScenarios(items) {
+  const rows = items.map(s => `<div class="scen-row"><span class="scen-icon">${s.icon}</span><span class="scen-text">${esc(s.txt)}</span></div>`).join('');
+  return `<div class="sec"><div class="sec-hd">🔮 Market Scenarios</div>${rows}</div>`;
+}
+
+function renderRiskRules(rules) {
+  const items = rules.map(r => `<li>${esc(r)}</li>`).join('');
+  return `<div class="sec"><div id="rrCard"><div class="sec-hd" style="border:none;margin-bottom:10px">⚠️ Risk Rules</div><ul>${items}</ul></div></div>`;
+}
+
+function renderQR(rows) {
+  const trs = rows.map(r => {
+    const isL = r.dir === 'LONG';
+    return `<tr class="${isL ? 'lr' : 'sr'}">
+      <td>${esc(r.num)}</td><td><strong>${esc(r.sym)}</strong></td>
+      <td style="color:${isL ? 'var(--green)' : 'var(--red)'}">${esc(r.dir)}</td>
+      <td>${esc(r.cmp)}</td><td>${esc(r.src)}</td>
+      <td>${esc(r.entry)}</td><td>${esc(r.sl)}</td>
+      <td>${esc(r.t1)}</td><td>${esc(r.t2)}</td>
+      <td>${esc(r.rr)}</td><td>${esc(r.conf)}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="sec"><div class="sec-hd">📋 Quick Reference</div><div class="qr-wrap">
+    <table class="qr-tbl"><thead><tr>
+      <th>#</th><th>Stock</th><th>Dir</th><th>CMP</th><th>Source</th>
+      <th>Entry</th><th>SL</th><th>T1</th><th>T2</th><th>R:R</th><th>Confidence</th>
+    </tr></thead><tbody>${trs}</tbody></table></div></div>`;
+}
+
+// ── Workflow status ──────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const run = await ghLatestRun();
+    if (!run) return;
+    const badge = document.getElementById('hdrStatus');
+    const { status, conclusion, updated_at } = run;
+    let txt, bg, clr;
+    if (status === 'in_progress') { txt = '⚡ Running'; bg = 'rgba(61,155,255,.2)'; clr = 'var(--blue)'; }
+    else if (status === 'queued') { txt = '⏳ Queued'; bg = 'rgba(255,165,2,.2)'; clr = 'var(--yellow)'; }
+    else if (conclusion === 'success') {
+      const t = new Date(updated_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+      txt = `✅ Done ${t}`; bg = 'rgba(0,212,170,.15)'; clr = 'var(--green)';
+    } else if (conclusion === 'failure') { txt = '❌ Failed'; bg = 'rgba(255,71,87,.2)'; clr = 'var(--red)'; }
+    else { txt = `⬜ ${conclusion || status}`; bg = 'rgba(255,255,255,.05)'; clr = 'var(--muted)'; }
+    badge.textContent = txt;
+    badge.style.cssText = `padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:${bg};border:1px solid ${clr};color:${clr}`;
+  } catch (_) { /* ignore polling errors */ }
+}
+
+// ── Run Now ──────────────────────────────────────────────────────────────────
+async function triggerRun() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true; btn.textContent = '⏳…';
+  try {
+    const ok = await ghDispatch();
+    toast(ok ? 'Workflow dispatched!' : 'Dispatch failed — check token permissions', ok ? 'ok' : 'err', 4000);
+    if (ok) setTimeout(pollStatus, 3000);
+  } catch (e) { toast(e.message, 'err'); }
+  finally { btn.disabled = false; btn.textContent = '▶ Run Now'; }
+}
+
+// ── Schedule ─────────────────────────────────────────────────────────────────
+async function loadSched() {
+  const sel = document.getElementById('schedSel');
+  try {
+    const f = await ghGet(WF_PATH);
+    const yaml = b64dec(f.content);
+    const cur = yaml.match(/cron:\s*'([^']+)'/)?.[1]?.trim() || '';
+    sel.innerHTML = '';
+    for (const [label, cron] of Object.entries(SCHEDS)) {
+      const o = document.createElement('option');
+      o.value = cron; o.textContent = label;
+      if (cron === cur) o.selected = true;
+      sel.appendChild(o);
+    }
+    if (!sel.value && cur) {
+      const o = document.createElement('option');
+      o.value = cur; o.textContent = `Custom (${cur})`; o.selected = true;
+      sel.insertBefore(o, sel.firstChild);
+    }
+  } catch (e) { sel.innerHTML = `<option>Error</option>`; }
+}
+
+async function onSchedChange(newCron) {
+  if (!newCron) return;
+  const label = Object.entries(SCHEDS).find(([, c]) => c === newCron)?.[0] || newCron;
+  const ss = document.getElementById('schedStatus');
+  ss.textContent = '⏳ Updating…';
+  try {
+    const f = await ghGet(WF_PATH);
+    const yaml = b64dec(f.content);
+    const updated = yaml.replace(/cron:\s*'[^']+'/, `cron: '${newCron}'`);
+    if (updated === yaml) { ss.textContent = '✅ Already set'; return; }
+    await ghPut(WF_PATH, updated, `chore: schedule → ${label}`, f.sha);
+    ss.textContent = `✅ Set to ${label}`;
+    toast(`Schedule updated to ${label}`, 'ok');
+  } catch (e) { ss.textContent = '❌ Failed'; toast(e.message, 'err'); }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  if (!_tok) { showTokenModal(); return; }
+  loading('Loading file list…');
+  try {
+    await loadFileList();
+    if (!_files.length) {
+      doneLoading();
+      document.getElementById('content').innerHTML = '<div class="empty"><h2>📭 No Analyses Yet</h2><p>Click ▶ Run Now to generate the first analysis.</p></div>';
+      await loadSched();
+      startPoll();
+      return;
+    }
+    const todayIST = new Intl.DateTimeFormat('sv', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    const ti = _files.findIndex(f => f.date === todayIST);
+    _idx = ti >= 0 ? ti : 0;
+    document.getElementById('dp').value = _files[_idx].date;
+    await Promise.all([loadAndRender(_files[_idx].name), loadSched()]);
+    startPoll();
+  } catch (e) {
+    doneLoading();
+    if (String(e.message).includes('401')) { toast('Invalid token', 'err'); showTokenModal(); }
+    else { document.getElementById('content').innerHTML = `<div class="empty"><h2>⚠️ Error</h2><p>${esc(e.message)}</p></div>`; toast(e.message, 'err'); }
+  }
+}
+
+function startPoll() {
+  pollStatus();
+  clearInterval(_pollTmr);
+  _pollTmr = setInterval(pollStatus, 30000);
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+setInterval(tickClock, 1000);
+tickClock();
+if (_tok) init();
+else showTokenModal();
+</script>
+</body>
+</html>
