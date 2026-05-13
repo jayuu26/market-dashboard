@@ -212,8 +212,11 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <h2>🔐 GitHub Access Token</h2>
     <p>Enter a GitHub Personal Access Token to read your private analysis files and trigger workflows. Stored only in your browser's localStorage — never sent anywhere except GitHub's API.</p>
     <input type="password" id="tkInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-    <p class="tm-hint">Needs scopes: <code>repo</code> (read files) &amp; <code>workflow</code> (trigger runs)<br>
-    Create one at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a></p>
+    <p class="tm-hint">
+      Required scopes for a <b>Classic PAT</b>: <code>repo</code> + <code>workflow</code><br>
+      Required for a <b>Fine-grained PAT</b>: Contents (Read) + Actions (Read &amp; Write)<br>
+      Create / edit at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a>
+    </p>
     <div class="tm-btns">
       <button class="btn btn-green" onclick="saveToken()">Save &amp; Connect</button>
       <button class="btn btn-ghost" onclick="closeTM()">Cancel</button>
@@ -321,11 +324,22 @@ async function ghDispatch() {
     headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ ref: 'main' })
   });
+  if (r.status === 404 || r.status === 403) {
+    throw new Error('Token missing "workflow" scope — regenerate at github.com/settings/tokens and add the workflow scope');
+  }
   return r.ok;
 }
 async function ghLatestRun() {
   const r = await fetch(`${API}/repos/${REPO}/actions/runs?per_page=3`,
     { headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json' } });
+  if (r.status === 404 || r.status === 403) {
+    // Token lacks workflow/actions scope — update status bar once and stop polling
+    const dot=document.getElementById('sDot'), txt=document.getElementById('sText');
+    if(dot) dot.className='sdot err';
+    if(txt) txt.textContent='⚠️ Token needs "workflow" scope to read Actions status';
+    clearInterval(_pollTmr); _pollTmr=null;
+    return null;
+  }
   if (!r.ok) return null;
   return (await r.json()).workflow_runs?.[0] || null;
 }
