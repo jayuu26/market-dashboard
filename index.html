@@ -213,8 +213,11 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <p>Enter a GitHub Personal Access Token to read your private analysis files and trigger workflows. Stored only in your browser's localStorage — never sent anywhere except GitHub's API.</p>
     <input type="password" id="tkInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
     <p class="tm-hint">
-      Required scopes for a <b>Classic PAT</b>: <code>repo</code> + <code>workflow</code><br>
-      Required for a <b>Fine-grained PAT</b>: Contents (Read) + Actions (Read &amp; Write)<br>
+      <b>Classic PAT</b>: scopes <code>repo</code> + <code>workflow</code><br>
+      <b>Fine-grained PAT</b> — Repository permissions required:<br>
+      &nbsp;• <code>Contents: Read</code> (read analysis files)<br>
+      &nbsp;• <code>Actions: Read and write</code> (trigger &amp; view runs)<br>
+      &nbsp;• <code>Workflows: Read and write</code> (update schedule)<br>
       Create / edit at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a>
     </p>
     <div class="tm-btns">
@@ -298,6 +301,7 @@ async function ghGet(path) {
   const r = await fetch(`${API}/repos/${REPO}/contents/${path}`,
     { headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json' } });
   if (r.status === 401) throw new Error('invalid_token');
+  if (r.status === 403) throw new Error('Token needs Contents: Read permission — update your PAT at github.com/settings/tokens');
   if (!r.ok) throw new Error(`GitHub ${r.status}: ${path}`);
   return r.json();
 }
@@ -315,6 +319,9 @@ async function ghPut(path, content, msg, sha) {
 async function ghList(path) {
   const r = await fetch(`${API}/repos/${REPO}/contents/${path}`,
     { headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json' } });
+  if (r.status === 401) throw new Error('invalid_token');
+  if (r.status === 403) throw new Error('Token needs Contents: Read permission — update your PAT at github.com/settings/tokens');
+  if (r.status === 404) throw new Error('analyses folder not found — check that the workflow has run at least once (404: '+path+')');
   if (!r.ok) return [];
   const j = await r.json(); return Array.isArray(j) ? j : [];
 }
