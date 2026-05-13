@@ -383,13 +383,28 @@ async function loadFileList() {
   const all = await ghList(DIR);
   _byDate={};
   for(const f of all){
-    if(!f.name.endsWith('.json')) continue;
-    const m=f.name.match(/^(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2})\.json$/);
-    if(!m) continue;
-    const date=m[1], time=m[2].replace('-',':');
-    (_byDate[date]=_byDate[date]||[]).push({name:f.name,time});
+    // JSON: YYYY-MM-DD_HH-MM.json  (new format)
+    const jm=f.name.match(/^(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2})\.json$/);
+    if(jm){
+      const date=jm[1], time=jm[2].replace('-',':');
+      (_byDate[date]=_byDate[date]||[]).push({name:f.name,time,type:'json'});
+      continue;
+    }
+    // MD: YYYY-MM-DD_HHMM.md  (legacy format — no dash between HH and MM)
+    const mm=f.name.match(/^(\d{4}-\d{2}-\d{2})_(\d{2})(\d{2})\.md$/);
+    if(mm){
+      const date=mm[1], time=`${mm[2]}:${mm[3]}`;
+      // Only add MD if no JSON exists yet for this date+time slot
+      (_byDate[date]=_byDate[date]||[]).push({name:f.name,time,type:'md'});
+    }
   }
-  for(const d in _byDate) _byDate[d].sort((a,b)=>a.time.localeCompare(b.time));
+  // Dedupe: if a date has both JSON and MD for the same time, keep JSON only
+  for(const d in _byDate){
+    const runs=_byDate[d];
+    const jsonTimes=new Set(runs.filter(r=>r.type==='json').map(r=>r.time));
+    _byDate[d]=runs.filter(r=>r.type==='json'||!jsonTimes.has(r.time));
+    _byDate[d].sort((a,b)=>a.time.localeCompare(b.time));
+  }
   _dates=Object.keys(_byDate).sort((a,b)=>b.localeCompare(a));
 }
 
@@ -424,15 +439,171 @@ function selectRun(idx){_rIdx=idx;renderNav();loadAndRender();}
 
 /* ── Load ──────────────────────────────────────────────────────────────── */
 async function loadAndRender(){
-  const fname=_byDate[_dates[_dIdx]][_rIdx].name;
+  const run=_byDate[_dates[_dIdx]][_rIdx];
   document.getElementById('content').innerHTML='<div class="empty"><div class="spin" style="width:32px;height:32px;border-width:3px;margin:0 auto 14px"></div><p>Loading…</p></div>';
   try{
-    const f=await ghGet(`${DIR}/${fname}`);
-    render(JSON.parse(b64dec(f.content)));
+    const f=await ghGet(`${DIR}/${run.name}`);
+    const text=b64dec(f.content);
+    render(run.type==='json' ? JSON.parse(text) : parseMDToJSON(text));
   }catch(e){
     document.getElementById('content').innerHTML=`<div class="empty"><h2>⚠️ Load Error</h2><p>${esc(e.message)}</p></div>`;
     toast(e.message,'err');
   }
+}
+
+/* ── MD → JSON converter (legacy .md files) ────────────────────────────── */
+function parseMDToJSON(md){
+  // Split into top-level ## sections, strip number prefix
+  const secs={};
+  for(const part of md.split(/\n(?=## )/)){
+    const m=part.match(/^##\s+(?:\d+\.\s*)?(.+)/);
+    if(m){secs[m[1].trim().toUpperCase()]=part.split('\n').slice(1).join('\n');}
+  }
+
+  // Extract key→value from MD tables: | **Key** | value |
+  function kv(text){
+    const out={};
+    for(const m of (text||'').matchAll(/\|\s*\*\*([^*|]+)\*\*\s*\|\s*([^|]+)\|/g))
+      out[m[1].trim()]=m[2].trim();
+    return out;
+  }
+  function n(v){if(!v)return null;const m=String(v).match(/[-+]?[\d,]+\.?\d*/);return m?parseFloat(m[0].replace(/,/g,'')):null;}
+  function p(v){if(!v)return null;const m=String(v).match(/[-+]?\d+\.?\d*/);return m?parseFloat(m[0]):null;}
+
+  const ctxKV=kv(secs['MARKET CONTEXT']||'');
+
+  // Parse setup blocks from Long/Short sections
+  function parseSetups(secText){
+    if(!secText) return [];
+    const setups=[];
+    for(const blk of secText.split(/\n(?=###\s)/)){
+      const symM=blk.match(/###.*:\s*([A-Z&0-9]+)/);
+      if(!symM) continue;
+      const sym=symM[1];
+      const tableKV=kv(blk);
+      const cmpM=blk.match(/NSE Verified.*Rs([\d,.]+)/i);
+      const cmp=cmpM?parseFloat(cmpM[1].replace(/,/g,'')):n(tableKV['CMP']);
+      const entryNums=(tableKV['Entry Range']||'').match(/[\d,.]+/g)||[];
+      const t1Raw=tableKV['Target 1']||'', t1N=(t1Raw.match(/[\d,.]+/g)||[]);
+      const t1PctM=t1Raw.match(/(\d+\.?\d*)\s*%/);
+      const t2Raw=tableKV['Target 2']||'', t2N=(t2Raw.match(/[\d,.]+/g)||[]);
+      const t2PctM=t2Raw.match(/(\d+\.?\d*)\s*%/);
+      const posNums=(tableKV['Position Size']||blk.match(/\*\*Position Size:\*\*\s*(.*)/)?.[1]||'').match(/[\d,]+/g)||[];
+      // Extract multi-line Technical/Fundamental
+      let tech='',fund='',mode='';
+      for(const line of blk.split('\n')){
+        const s=line.trim();
+        if(s==='**Technical:**'){mode='tech';continue;}
+        if(s==='**Fundamental:**'){mode='fund';continue;}
+        if(s.startsWith('**')&&s.endsWith('**')) mode='';
+        if(mode==='tech'&&s&&!s.startsWith('|')&&!s.startsWith('>')) tech=s;
+        if(mode==='fund'&&s&&!s.startsWith('|')&&!s.startsWith('>')) fund=s;
+      }
+      const invM=blk.match(/\*\*Invalidation:\*\*\s*([\d,.]+)/);
+      setups.push({
+        symbol:sym, cmp, price_verified:blk.includes('✅'),
+        entry_low:n(entryNums[0]), entry_high:n(entryNums[1]),
+        stop_loss:n(tableKV['Stop Loss']),
+        target1:n(t1N[0]), target1_pct:t1PctM?parseFloat(t1PctM[1]):null,
+        target2:n(t2N[0]), target2_pct:t2PctM?parseFloat(t2PctM[1]):null,
+        risk_reward:tableKV['Risk Reward']||null,
+        holding:tableKV['Holding']||null,
+        confidence:tableKV['Confidence']||null,
+        pattern:tableKV['Chart Pattern']||null,
+        technical:tech||null, fundamental:fund||null,
+        invalidation:invM?n(invM[1]):null,
+        position_size_shares:posNums[0]?parseInt(posNums[0].replace(/,/g,'')):null,
+        position_size_capital:posNums[1]?parseInt(posNums[1].replace(/,/g,'')):null,
+      });
+    }
+    return setups;
+  }
+
+  // Best trade
+  const btKV={};
+  for(const l of (secs['BEST TRADE OF THE DAY']||'').split('\n')){
+    const m=l.trim().match(/^\*\*([^*]+)\*\*:\s*(.*)/);
+    if(m) btKV[m[1]]=m[2];
+  }
+
+  // Scenarios
+  const sc={};
+  for(const l of (secs['MARKET SCENARIOS']||'').split('\n')){
+    const s=l.replace(/\*\*/g,'').replace(/[🟢🔴🟡]/g,'').trim();
+    const b=s.match(/If Nifty opens above\s+([\d,]+):\s*(.*)/i);
+    const r=s.match(/If Nifty opens below\s+([\d,]+):\s*(.*)/i);
+    const f=s.match(/If Nifty opens flat between\s+([\d,]+)\s+and\s+([\d,]+):\s*(.*)/i);
+    if(b) sc.bullish={level:n(b[1]),strategy:b[2].trim()};
+    if(r) sc.bearish={level:n(r[1]),strategy:r[2].trim()};
+    if(f) sc.range={low:n(f[1]),high:n(f[2]),strategy:f[3].trim()};
+  }
+
+  // Accuracy
+  const acc={};
+  for(const l of (secs['ACCURACY REVIEW']||'').split('\n')){
+    const s=l.replace(/^[-•*\s✅❌🔁]+/,'').trim();
+    if(/What worked:/i.test(s)) acc.worked=s.replace(/What worked:\s*/i,'');
+    if(/What missed:/i.test(s)) acc.missed=s.replace(/What missed:\s*/i,'');
+    if(/Key lesson:/i.test(s))  acc.lesson=s.replace(/Key lesson:\s*/i,'');
+  }
+
+  // Watchlist
+  const wl=[];
+  for(const chunk of (secs['WATCHLIST']||'').split(/\n(?=\*\*[A-Z])/)){
+    const symM=chunk.match(/\*\*([A-Z&0-9]+)\*\*/);
+    if(!symM) continue;
+    const prM=chunk.match(/Rs([\d,.]+)/);
+    const wkv={};
+    for(const l of chunk.split('\n')){const m=l.trim().match(/^-\s*\*\*([^*]+)\*\*:\s*(.*)/);if(m)wkv[m[1]]=m[2];}
+    wl.push({symbol:symM[1],cmp:prM?n(prM[1]):null,pattern:wkv['Pattern']||null,watch_level:n(wkv['Watch Level']),technical_note:wkv['Technical Note']||null,fundamental_note:wkv['Fundamental Note']||null});
+  }
+
+  // Risk rules
+  const rr={};
+  const rrSpecs=[
+    [/Nifty bull case fails below[:\s]+([\d,]+)/i,'bull_fails_below',v=>n(v)],
+    [/Nifty bear case fails above[:\s]+([\d,]+)/i,'bear_fails_above',v=>n(v)],
+    [/Bank Nifty critical level[:\s]+([\d,]+)/i,'banknifty_critical',v=>n(v)],
+    [/Max positions[:\s]+(\d+)/i,'max_positions',v=>parseInt(v)],
+    [/Max capital per trade[:\s]+Rs\s*([\d,]+)/i,'max_capital_per_trade',v=>parseInt(v.replace(/,/g,''))],
+    [/Intraday exit[:\s]+(\S+)/i,'intraday_exit',v=>v],
+  ];
+  for(const l of (secs['RISK RULES']||'').split('\n')){
+    const s=l.replace(/^[-•\s]+/,'').trim();
+    for(const [pat,key,conv] of rrSpecs){const m=s.match(pat);if(m){try{rr[key]=conv(m[1]);}catch(_){}break;}}
+  }
+
+  const fiiRaw=ctxKV['FII Flow']||'', diiRaw=ctxKV['DII Flow']||'';
+  const sp500N=(ctxKV['S&P 500']||'').match(/[-+]?\d+\.?\d*/g)||[];
+  const nasN=(ctxKV['Nasdaq']||'').match(/[-+]?\d+\.?\d*/g)||[];
+  const crudeRaw=ctxKV['Crude WTI']||'';
+
+  return {
+    generated_at:null, date:null, data_source:'MD Archive',
+    market:{
+      nifty:{close:n(ctxKV['Nifty 50 Close']),change_pct:p(ctxKV['Nifty Change']),trend:ctxKV['Nifty Trend']||null,support1:n(ctxKV['Nifty Support 1']),support2:n(ctxKV['Nifty Support 2']),resistance1:n(ctxKV['Nifty Resistance 1']),resistance2:n(ctxKV['Nifty Resistance 2']),view:ctxKV['Nifty View']||null},
+      banknifty:{close:n(ctxKV['Bank Nifty Close']),change_pct:null,trend:ctxKV['Bank Nifty Trend']||null,support1:n(ctxKV['Bank Nifty Support 1']),support2:n(ctxKV['Bank Nifty Support 2']),resistance1:n(ctxKV['Bank Nifty Resistance 1']),resistance2:n(ctxKV['Bank Nifty Resistance 2']),view:ctxKV['Bank Nifty View']||null},
+      vix:n(ctxKV['India VIX']), gift_nifty:n(ctxKV['GIFT Nifty']),
+      sp500:{value:n(sp500N[0]),change_pct:n(sp500N[1])},
+      nasdaq:{value:n(nasN[0]),change_pct:n(nasN[1])},
+      crude_wti:{value:n(crudeRaw),direction:/up|ris|higher|bull/i.test(crudeRaw)?'up':'down'},
+      dxy:n(ctxKV['DXY']),
+      fii_flow:/sell/i.test(fiiRaw)?-(Math.abs(n(fiiRaw)||0)):n(fiiRaw),
+      dii_flow:/sell/i.test(diiRaw)?-(Math.abs(n(diiRaw)||0)):n(diiRaw),
+      strong_sectors:(ctxKV['Strong Sectors']||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),
+      weak_sectors:(ctxKV['Weak Sectors']||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),
+      bias:ctxKV['Overall Market Bias']||null,
+      bias_reason:ctxKV['Bias Reason']||null,
+      key_news:ctxKV['Key News']||null,
+    },
+    accuracy:acc,
+    longs:parseSetups(secs['LONG SETUPS']||''),
+    shorts:parseSetups(secs['SHORT SETUPS']||''),
+    watchlist:wl,
+    best_trade:{symbol:btKV['Stock']?btKV['Stock'].trim().split(/\s/)[0].toUpperCase():null,direction:btKV['Direction']||null,cmp:n(btKV['CMP']),entry:n(btKV['Entry']),stop_loss:n(btKV['Stop Loss']),target:n(btKV['Target']),risk_reward:btKV['Risk Reward']||null,conviction:btKV['Conviction Reason']||null},
+    scenarios:sc,
+    risk_rules:rr,
+  };
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
