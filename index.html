@@ -1100,6 +1100,7 @@ if(_tok) init(); else openTM();
 /* ── Tab Switching ─────────────────────────────────────────────────────── */
 function switchTab(tab) {
   const isMarket = tab === 'market';
+  if (isMarket) stopLiveFeed();
   document.getElementById('marketTab').style.display = isMarket ? 'block' : 'none';
   document.getElementById('stockTab').style.display  = isMarket ? 'none' : 'block';
   document.getElementById('tabMarket').classList.toggle('active', isMarket);
@@ -1108,6 +1109,116 @@ function switchTab(tab) {
     setTimeout(() => document.getElementById('saInput').focus(), 50);
     renderSaRecent();
   }
+}
+
+/* ── Market Status & Live Price Feed ───────────────────────────────────── */
+let _liveSymbol = null, _liveFeedTmr = null;
+
+function isMarketOpen() {
+  const ist = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
+  const d = ist.getDay(), h = ist.getHours(), m = ist.getMinutes();
+  if (d === 0 || d === 6) return false;
+  const mins = h * 60 + m;
+  return mins >= 9 * 60 + 15 && mins <= 15 * 60 + 30;
+}
+
+function marketStatusLabel() {
+  const ist = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
+  const d = ist.getDay(), h = ist.getHours(), m = ist.getMinutes();
+  const mins = h * 60 + m;
+  if (d === 0 || d === 6) return {label:'Weekend', open:false};
+  if (mins >= 9*60 && mins < 9*60+15)  return {label:'Pre-Market', open:false};
+  if (mins >= 9*60+15 && mins <= 15*60+30) return {label:'🟢 LIVE', open:true};
+  if (mins > 15*60+30 && mins <= 16*60) return {label:'Post-Market', open:false};
+  return {label:'Market Closed', open:false};
+}
+
+async function fetchYahooQuote(symbol) {
+  try {
+    const r = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.NS?interval=1m&range=1d&includePrePost=false`,
+      {headers:{'Accept':'application/json'}, signal: AbortSignal.timeout(8000)}
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    const res  = data?.chart?.result?.[0];
+    if (!res) return null;
+    const meta  = res.meta;
+    const q     = res.indicators?.quote?.[0] || {};
+    const highs = (q.high   || []).filter(Boolean);
+    const lows  = (q.low    || []).filter(Boolean);
+    const vols  = (q.volume || []).filter(Boolean);
+    const lp    = meta.regularMarketPrice;
+    const pdc   = meta.previousClose || meta.chartPreviousClose;
+    const chg   = lp && pdc ? Math.round((lp - pdc) * 100) / 100 : null;
+    const chgP  = chg && pdc ? Math.round(chg / pdc * 10000) / 100 : null;
+    return {
+      cmp:        lp,
+      change:     chg,
+      change_pct: chgP,
+      day_open:   meta.regularMarketOpen,
+      day_high:   highs.length ? Math.max(...highs) : null,
+      day_low:    lows.length  ? Math.min(...lows)  : null,
+      week52_high: meta.fiftyTwoWeekHigh,
+      week52_low:  meta.fiftyTwoWeekLow,
+      volume:     vols.length ? vols.reduce((a,b)=>a+b,0) : meta.regularMarketVolume,
+    };
+  } catch(e) { return null; }
+}
+
+function updateLivePrice(p) {
+  if (!p || !p.cmp) return;
+  const chgCl = (p.change_pct||0) >= 0 ? 'g' : 'r';
+  const chgAr = (p.change_pct||0) >= 0 ? '▲' : '▼';
+  const set = (id, html) => { const el=document.getElementById(id); if(el) el.innerHTML=html; };
+  set('sa-live-cmp',  inr(p.cmp, 2));
+  const chgEl = document.getElementById('sa-live-chg');
+  if (chgEl) {
+    chgEl.className   = `sa-hdr-chg ${chgCl}`;
+    chgEl.textContent = `${chgAr} ${p.change_pct!=null?Math.abs(p.change_pct).toFixed(2)+'%':''} ${p.change!=null?'('+inr(Math.abs(p.change),2)+')':''}`;
+  }
+  set('sa-live-open', p.day_open !=null ? inr(p.day_open,2)  : '—');
+  set('sa-live-high', p.day_high !=null ? inr(p.day_high,2)  : '—');
+  set('sa-live-low',  p.day_low  !=null ? inr(p.day_low,2)   : '—');
+  set('sa-live-52h',  p.week52_high!=null ? inr(p.week52_high,0) : '—');
+  set('sa-live-52l',  p.week52_low !=null ? inr(p.week52_low,0)  : '—');
+  set('sa-live-vol',  p.volume!=null ? (+p.volume).toLocaleString('en-IN') : '—');
+  const now = new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  set('sa-live-ts', `Yahoo Finance · ${now} IST`);
+}
+
+function startLiveFeed(symbol) {
+  _liveSymbol = symbol;
+  clearInterval(_liveFeedTmr);
+  _liveFeedTmr = null;
+
+  const mkt = marketStatusLabel();
+  const statusEl = document.getElementById('sa-market-status');
+  if (statusEl) {
+    statusEl.textContent = mkt.label;
+    statusEl.style.color = mkt.open ? 'var(--green)' : 'var(--muted)';
+    if (mkt.open) statusEl.style.animation = 'pulse 2s infinite';
+    else statusEl.style.animation = '';
+  }
+
+  const poll = async () => {
+    const p = await fetchYahooQuote(symbol);
+    if (p) updateLivePrice(p);
+    if (!isMarketOpen() && _liveFeedTmr) {
+      clearInterval(_liveFeedTmr);
+      _liveFeedTmr = null;
+      const el = document.getElementById('sa-market-status');
+      if (el) { el.textContent = 'Market Closed'; el.style.color='var(--muted)'; el.style.animation=''; }
+    }
+  };
+  poll();
+  if (mkt.open) _liveFeedTmr = setInterval(poll, 30000);
+}
+
+function stopLiveFeed() {
+  clearInterval(_liveFeedTmr);
+  _liveFeedTmr = null;
+  _liveSymbol  = null;
 }
 
 /* ── F&O Stock Lookup Table ────────────────────────────────────────────── */
@@ -1486,6 +1597,7 @@ function renderSaAnalysis(d) {
   html += renderSaPaperHistory(d);
   html += renderSaActions(d);
   el.innerHTML = html;
+  setTimeout(() => startLiveFeed(d.symbol), 100);
 }
 
 function riskCls(r) {
@@ -1535,19 +1647,21 @@ function renderSaHeader(d) {
         </div>
       </div>
       <div class="sa-hdr-price">
-        <div class="sa-hdr-cmp">${pr.cmp!=null?inr(pr.cmp,2):'—'}</div>
-        <div class="sa-hdr-chg ${chgCl}">${chgAr} ${pr.change_pct!=null?Math.abs(pr.change_pct).toFixed(2)+'%':''} ${pr.change!=null?'('+inr(Math.abs(pr.change),2)+')':''}</div>
-        ${pr.volume_ratio!=null?`<div style="font-size:11px;color:var(--muted)">Vol: ${(+pr.volume_ratio).toFixed(1)}x avg</div>`:''}
+        <div class="sa-hdr-cmp" id="sa-live-cmp">${pr.cmp!=null?inr(pr.cmp,2):'—'}</div>
+        <div class="sa-hdr-chg ${chgCl}" id="sa-live-chg">${chgAr} ${pr.change_pct!=null?Math.abs(pr.change_pct).toFixed(2)+'%':''} ${pr.change!=null?'('+inr(Math.abs(pr.change),2)+')':''}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="sa-market-status"></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px" id="sa-live-ts"></div>
       </div>
     </div>
     <div class="sa-hdr-grid">
-      <div class="sa-hdr-col"><span style="color:var(--muted)">Open</span><b>${pr.day_open!=null?inr(pr.day_open,2):'—'}</b></div>
-      <div class="sa-hdr-col"><span style="color:var(--muted)">High</span><b class="g">${pr.day_high!=null?inr(pr.day_high,2):'—'}</b></div>
-      <div class="sa-hdr-col"><span style="color:var(--muted)">Low</span><b class="r">${pr.day_low!=null?inr(pr.day_low,2):'—'}</b></div>
-      <div class="sa-hdr-col"><span style="color:var(--muted)">52W High</span><b>${pr.week52_high!=null?inr(pr.week52_high,0):'—'}</b></div>
-      <div class="sa-hdr-col"><span style="color:var(--muted)">52W Low</span><b>${pr.week52_low!=null?inr(pr.week52_low,0):'—'}</b></div>
-      <div class="sa-hdr-col"><span style="color:var(--muted)">Generated</span><b style="font-size:11px">${esc(gen)}</b></div>
+      <div class="sa-hdr-col"><span style="color:var(--muted)">Open</span><b id="sa-live-open">${pr.day_open!=null?inr(pr.day_open,2):'—'}</b></div>
+      <div class="sa-hdr-col"><span style="color:var(--muted)">High</span><b class="g" id="sa-live-high">${pr.day_high!=null?inr(pr.day_high,2):'—'}</b></div>
+      <div class="sa-hdr-col"><span style="color:var(--muted)">Low</span><b class="r" id="sa-live-low">${pr.day_low!=null?inr(pr.day_low,2):'—'}</b></div>
+      <div class="sa-hdr-col"><span style="color:var(--muted)">52W High</span><b id="sa-live-52h">${pr.week52_high!=null?inr(pr.week52_high,0):'—'}</b></div>
+      <div class="sa-hdr-col"><span style="color:var(--muted)">52W Low</span><b id="sa-live-52l">${pr.week52_low!=null?inr(pr.week52_low,0):'—'}</b></div>
+      <div class="sa-hdr-col"><span style="color:var(--muted)">Volume</span><b id="sa-live-vol">${pr.volume!=null?(+pr.volume).toLocaleString('en-IN'):'—'}</b></div>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">Analysis generated: ${esc(gen)}</div>
   </div>`;
 }
 
