@@ -58,8 +58,13 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 #datePicker{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:13px;font-family:inherit;outline:none}
 #datePicker:focus{border-color:var(--blue)}
 .run-selector{display:none;align-items:center;gap:4px}
-.run-pill{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:12px;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.run-pill{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:12px;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
 .run-pill.active{background:rgba(59,130,246,.2);border-color:var(--blue);color:var(--blue)}
+.run-del-btn{background:none;border:none;font-size:12px;cursor:pointer;padding:0 0 0 2px;line-height:1;opacity:0;transition:opacity .15s,color .15s;color:inherit;flex-shrink:0}
+.run-pill:hover .run-del-btn{opacity:.75}
+.run-del-btn:hover{opacity:1!important;color:var(--red)!important}
+/* Touch devices — button always visible since :hover doesn't fire */
+@media(hover:none){.run-del-btn{opacity:.5}.run-del-btn:active{color:var(--red)}}
 .hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
 #clock{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 
@@ -556,6 +561,53 @@ async function ghList(path) {
   if (!r.ok) return [];
   const j = await r.json(); return Array.isArray(j) ? j : [];
 }
+async function ghDelete(path, sha) {
+  const body = { message: `Delete run: ${path}`, sha };
+  const r = await fetch(`${API}/repos/${REPO}/contents/${path}`, {
+    method: 'DELETE',
+    headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || `DELETE ${r.status}`); }
+}
+
+async function deleteRun(idx) {
+  const date = _dates[_dIdx];
+  const run  = _byDate[date][idx];
+  if (!confirm(`Delete run ${idx+1} (${run.time}) for ${date}?\n\nThis will permanently remove the file from GitHub.`)) return;
+  toast('Deleting…','info',8000);
+  try {
+    // Gather all files to delete (json + companion md if both exist for same timestamp)
+    const baseName = run.name.replace(/\.(json|md)$/, '');
+    const companions = _byDate[date].filter(r =>
+      r.name.replace(/\.(json|md)$/, '') === baseName
+    );
+    for (const c of companions) {
+      const f = await ghGet(`${DIR}/${c.name}`);
+      await ghDelete(`${DIR}/${c.name}`, f.sha);
+    }
+    // Remove from in-memory state
+    _byDate[date] = _byDate[date].filter(r =>
+      r.name.replace(/\.(json|md)$/, '') !== baseName
+    );
+    if (_byDate[date].length === 0) {
+      delete _byDate[date];
+      _dates = _dates.filter(d => d !== date);
+    }
+    toast('Run deleted ✓','ok');
+    if (!_dates.length) {
+      document.getElementById('content').innerHTML = '<div class="empty"><h2>No analyses yet</h2><p>Run the agent to generate your first analysis.</p></div>';
+      document.getElementById('runSel').style.display = 'none';
+      return;
+    }
+    _dIdx = Math.min(_dIdx, _dates.length - 1);
+    _rIdx = _byDate[_dates[_dIdx]].length - 1;
+    renderNav(); loadAndRender();
+  } catch(e) {
+    toast('Delete failed: ' + e.message, 'err', 5000);
+  }
+}
+
 async function ghDispatch() {
   const r = await fetch(`${API}/repos/${REPO}/actions/workflows/${WF}/dispatches`, {
     method: 'POST',
@@ -651,13 +703,13 @@ function renderNav(){
   const date=_dates[_dIdx], runs=_byDate[date];
   document.getElementById('datePicker').value=date;
   const sel=document.getElementById('runSel');
-  if(runs.length<=1){sel.style.display='none';sel.innerHTML='';}
-  else{
-    sel.style.display='flex';
-    sel.innerHTML=runs.map((r,i)=>
-      `<span class="run-pill ${i===_rIdx?'active':''}" onclick="selectRun(${i})">Run ${i+1} (${r.time})</span>`
-    ).join('');
-  }
+  sel.style.display='flex';
+  sel.innerHTML=runs.map((r,i)=>
+    `<span class="run-pill ${i===_rIdx?'active':''}" onclick="selectRun(${i})">` +
+    `Run ${i+1} (${r.time})` +
+    `<button class="run-del-btn" title="Delete this run" onclick="event.stopPropagation();deleteRun(${i})">🗑</button>` +
+    `</span>`
+  ).join('');
 }
 function onDateChange(){
   const v=document.getElementById('datePicker').value, i=_dates.indexOf(v);
