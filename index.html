@@ -1100,8 +1100,8 @@ if(_tok) init(); else openTM();
 /* ── Tab Switching ─────────────────────────────────────────────────────── */
 function switchTab(tab) {
   const isMarket = tab === 'market';
-  document.getElementById('marketTab').style.display = isMarket ? '' : 'none';
-  document.getElementById('stockTab').style.display  = isMarket ? 'none' : '';
+  document.getElementById('marketTab').style.display = isMarket ? 'block' : 'none';
+  document.getElementById('stockTab').style.display  = isMarket ? 'none' : 'block';
   document.getElementById('tabMarket').classList.toggle('active', isMarket);
   document.getElementById('tabSearch').classList.toggle('active', !isMarket);
   if (!isMarket) {
