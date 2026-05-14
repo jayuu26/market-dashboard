@@ -912,17 +912,18 @@ function render(d){
 
 /* ── Market ────────────────────────────────────────────────────────────── */
 function renderMarket(m){
-  const nifty=m.nifty||{}, bn=m.banknifty||{}, sp=m.sp500||{}, nas=m.nasdaq||{}, crude=m.crude_wti||{};
+  const nifty=m.nifty||{}, bn=m.banknifty||{}, sp=m.sp500||{}, nas=m.nasdaq||{}, dow=m.dow||{}, crude=m.crude_wti||{};
   const bias=m.bias||'';
   const isBull=/bull/i.test(bias), isBear=/bear/i.test(bias);
   const biasClr=isBull?'g':isBear?'r':'y';
 
-  const idxCard=(lbl,val,chg,sub)=>`
+  const idxCard=(lbl,val,chg,sub,sub2)=>`
     <div class="idx-card">
       <div class="idx-label">${esc(lbl)}</div>
       <div class="idx-value">${esc(val)}</div>
       <div class="idx-chg ${chgCls(chg)}">${arr(chg)} ${chg!=null?Math.abs(chg).toFixed(2)+'%':'—'}</div>
       ${sub?`<div class="idx-sub">${sub}</div>`:''}
+      ${sub2?`<div class="idx-sub">${sub2}</div>`:''}
     </div>`;
 
   const glRow=(k,v,cls='')=>`<div class="gl-row"><span class="gl-key">${esc(k)}</span><span class="gl-val ${cls}">${v}</span></div>`;
@@ -934,14 +935,22 @@ function renderMarket(m){
   const sStrong=(m.strong_sectors||[]).map(s=>`<span class="stag stag-g">${esc(s)}</span>`).join('');
   const sWeak  =(m.weak_sectors||[]).map(s=>`<span class="stag stag-r">${esc(s)}</span>`).join('');
 
+  const niftyHL = (nifty.day_high && nifty.day_low)
+    ? `H: ${inr(nifty.day_high,0)} L: ${inr(nifty.day_low,0)}` : '';
+  const bnHL = (bn.day_high && bn.day_low)
+    ? `H: ${inr(bn.day_high,0)} L: ${inr(bn.day_low,0)}` : '';
+
   return `<div class="mkt-grid">
     ${idxCard('Nifty 50', nifty.close?inr(nifty.close):'—', nifty.change_pct,
-      nifty.support1?`S: ${inr(nifty.support1,0)} &nbsp;R: ${inr(nifty.resistance1,0)}`:'')}
+      nifty.support1?`S: ${inr(nifty.support1,0)} &nbsp;R: ${inr(nifty.resistance1,0)}`:'',
+      niftyHL)}
     ${idxCard('Bank Nifty', bn.close?inr(bn.close):'—', bn.change_pct,
-      bn.support1?`S: ${inr(bn.support1,0)} &nbsp;R: ${inr(bn.resistance1,0)}`:'')}
+      bn.support1?`S: ${inr(bn.support1,0)} &nbsp;R: ${inr(bn.resistance1,0)}`:'',
+      bnHL)}
     <div class="idx-card">
       <div class="idx-label">India VIX</div>
       <div class="idx-value">${m.vix!=null?(+m.vix).toFixed(2):'—'}</div>
+      <div class="idx-chg ${m.vix!=null&&m.vix>18?'r':m.vix!=null&&m.vix<14?'g':'y'}">${m.vix!=null?(m.vix>18?'High':'Low'):'—'}</div>
       <div class="idx-sub">${m.gift_nifty?'GIFT: '+inr(m.gift_nifty):''}</div>
     </div>
 
@@ -963,17 +972,17 @@ function renderMarket(m){
       <div class="gl-col">
         ${glRow('S&P 500', sp.value?`${num(sp.value,0)} <span class="${chgCls(sp.change_pct)}">${arr(sp.change_pct)}${sp.change_pct!=null?Math.abs(sp.change_pct).toFixed(2)+'%':''}</span>`:'—')}
         ${glRow('Nasdaq',  nas.value?`${num(nas.value,0)} <span class="${chgCls(nas.change_pct)}">${arr(nas.change_pct)}${nas.change_pct!=null?Math.abs(nas.change_pct).toFixed(2)+'%':''}</span>`:'—')}
-        ${glRow('GIFT Nifty', m.gift_nifty?inr(m.gift_nifty):'—')}
+        ${glRow('Dow Jones', dow.value?`${num(dow.value,0)} <span class="${chgCls(dow.change_pct)}">${arr(dow.change_pct)}${dow.change_pct!=null?Math.abs(dow.change_pct).toFixed(2)+'%':''}</span>`:'—')}
       </div>
       <div class="gl-col">
-        ${glRow('Crude WTI', crude.value?`$${(+crude.value).toFixed(2)} <span class="${crude.direction==='up'?'g':'r'}">${crude.direction==='up'?'▲':'▼'}</span>`:'—')}
+        ${glRow('Crude WTI', crude.value?`$${(+crude.value).toFixed(2)} <span class="${chgCls(crude.change_pct)}">${arr(crude.change_pct)}${crude.change_pct!=null?Math.abs(crude.change_pct).toFixed(2)+'%':''}</span>`:'—')}
         ${glRow('DXY', m.dxy?num(m.dxy,2):'—')}
-        ${glRow('India VIX', m.vix!=null?(+m.vix).toFixed(2):'—')}
+        ${glRow('GIFT Nifty', m.gift_nifty?inr(m.gift_nifty):'—')}
       </div>
       <div class="gl-col">
         ${glRow('FII Flow', fiiStr)}
         ${glRow('DII Flow', diiStr)}
-        ${glRow('Nifty Trend', `<span class="${isBull?'g':isBear?'r':'y'}">${esc(nifty.trend||'—')}</span>`)}
+        ${glRow('India VIX', m.vix!=null?`<span class="${m.vix>18?'r':m.vix<14?'g':'y'}">${(+m.vix).toFixed(2)}</span>`:'—')}
       </div>
     </div>
   </div>`;
