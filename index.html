@@ -297,6 +297,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .sa-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 
 /* ─── Responsive ───────────────────────────────────────────────────────── */
+
+/* Tablet ≤900px */
 @media(max-width:900px){
   .mkt-grid{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto}
   .bias-card{grid-column:1/3;grid-row:3}
@@ -304,16 +306,89 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   .setups-wrap,.bottom-row{grid-template-columns:1fr}
   .bt-grid{grid-template-columns:1fr 1fr}
   .rr-grid{grid-template-columns:1fr 1fr}
-  .sa-ind-grid{grid-template-columns:1fr 1fr}
-  .sa-sig-grid{grid-template-columns:1fr 1fr}
-  .sa-risk-grid{grid-template-columns:1fr 1fr}
+  .sa-ind-grid{grid-template-columns:repeat(2,1fr)}
+  .sa-sig-grid{grid-template-columns:repeat(2,1fr)}
+  .sa-risk-grid{grid-template-columns:repeat(2,1fr)}
+  .sa-opt-grid{grid-template-columns:repeat(2,1fr)}
+  .sa-levels-grid{grid-template-columns:repeat(2,1fr)}
+  .sa-fund-news-grid{grid-template-columns:1fr!important}
+  .sa-inst-grid{grid-template-columns:repeat(2,1fr)!important}
 }
+
+/* Mobile ≤600px */
 @media(max-width:600px){
+  /* Header — allow wrapping, drop decorative separators */
+  .hdr-top{height:auto;min-height:44px;padding:6px 10px;gap:5px;flex-wrap:wrap}
+  .hdr-sep{display:none}
+  #clock{display:none}
+  #schedSel,#schedMsg{display:none}
+  .hdr-right{margin-left:auto}
+  .status-bar{padding:0 10px;font-size:11px;gap:6px}
+
+  /* Tighter main padding */
+  #main{padding:0 8px}
+  #marketTab{padding:10px 0}
+
+  /* Market overview — keep 2 cols, collapse global card */
   .mkt-grid{grid-template-columns:1fr 1fr}
   .bias-card{grid-column:1/3}
-  .global-card{grid-column:1/3}
-  #main{padding:10px}
+  .global-card{grid-column:1/3;grid-template-columns:1fr!important}
+  .idx-value{font-size:18px}
+
+  /* Setups / panels already 1-col from 900px breakpoint */
+
+  /* Best trade */
+  .bt-grid{grid-template-columns:1fr 1fr}
+
+  /* Stock analysis — stack price below symbol info */
+  .sa-hdr-top{flex-direction:column;gap:8px}
+  .sa-hdr-price{margin-left:0;text-align:left;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .sa-hdr-cmp{font-size:20px}
+  .sa-hdr-grid{grid-template-columns:repeat(2,1fr)}
+  .sa-sig-dir{font-size:17px}
+
+  /* Options table — horizontal scroll so it doesn't break layout */
+  .sa-strikes-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .sa-strikes{min-width:360px}
+
+  /* Tab bar */
+  .tab-btn{font-size:12px;padding:10px 10px}
+
+  /* Search row — button full width on mobile */
+  .sa-search-row{flex-direction:column}
+  .sa-search-row>.btn{width:100%;justify-content:center}
+
+  /* Cards */
+  .sa-card{padding:12px}
+  .panel{padding:10px}
+
+  /* Chip row */
+  .sa-chips{gap:4px}
+}
+
+/* Small mobile ≤420px — collapse to single column where density is too high */
+@media(max-width:420px){
+  .mkt-grid{grid-template-columns:1fr}
+  .bias-card,.global-card{grid-column:1}
+  .bt-grid{grid-template-columns:1fr 1fr}
+  .rr-grid{grid-template-columns:1fr 1fr}
   .sa-ind-grid{grid-template-columns:1fr 1fr}
+  .sa-sig-grid{grid-template-columns:1fr}
+  .sa-hdr-grid{grid-template-columns:1fr 1fr}
+  .sa-inst-grid{grid-template-columns:1fr!important}
+
+  /* Header elements smaller */
+  .logo{font-size:13px}
+  .btn-sm{padding:4px 8px;font-size:11px}
+  #datePicker{font-size:12px;padding:3px 6px}
+  .nav-arrow{width:22px;height:22px;font-size:10px}
+
+  /* Tab bar labels — compact */
+  .tab-btn{font-size:11px;padding:9px 8px}
+
+  /* Cards extra tight */
+  .sa-card{padding:10px}
+  .idx-card{padding:10px 12px}
 }
 </style>
 </head>
@@ -1759,10 +1834,10 @@ function renderSaOptions(d) {
       <div><span class="fkey">IV</span><span class="fval">${o.iv!=null?o.iv.toFixed(1)+'%':'—'}</span></div>
       <div><span class="fkey">IV Regime</span><span class="fval">${esc(o.iv_regime||'—')}</span></div>
     </div>
-    ${(o.key_strikes||[]).length ? `<table class="sa-strikes">
+    ${(o.key_strikes||[]).length ? `<div class="sa-strikes-wrap"><table class="sa-strikes">
       <thead><tr><th>Strike</th><th>Call OI</th><th>Put OI</th><th>Interpretation</th></tr></thead>
       <tbody>${(o.key_strikes||[]).map(r=>`<tr><td>${inr(r.strike,0)}</td><td>${(r.call_oi||0).toLocaleString('en-IN')}</td><td>${(r.put_oi||0).toLocaleString('en-IN')}</td><td style="color:var(--muted)">${esc(r.note||'')}</td></tr>`).join('')}</tbody>
-    </table>` : ''}
+    </table></div>` : ''}
   </div>`;
 }
 
@@ -1772,7 +1847,7 @@ function renderSaFundNews(d) {
   const items = (n.items || []).slice(0, 4);
   const impCls = imp => imp === 'HIGH' ? 'imp-high' : imp === 'MED' ? 'imp-med' : 'imp-low';
   const sentEmoji = s => s === 'bull' ? '📈' : s === 'bear' ? '📉' : '📊';
-  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+  return `<div class="sa-fund-news-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
     <div class="sa-card" style="margin-bottom:0">
       <div class="sa-card-title">Fundamentals</div>
       ${f.market_cap_cr ? `<div style="font-size:12px;margin-bottom:8px"><b>${inr(f.market_cap_cr||0,0)} Cr</b> — ${esc(f.cap_category||'')}</div>` : ''}
@@ -1801,7 +1876,7 @@ function renderSaInstitutional(d) {
   const diiCl = (inst.today_dii_cr||0) >= 0 ? 'g' : 'r';
   return `<div class="sa-card">
     <div class="sa-card-title">Institutional Flows</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px">
+    <div class="sa-inst-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px">
       ${inst.today_fii_cr!=null?`<div><span class="fkey">Today FII</span><span class="fval ${fiiCl}">${inst.today_fii_cr>=0?'+':''}${inr(inst.today_fii_cr,0)} Cr</span></div>`:''}
       ${inst.today_dii_cr!=null?`<div><span class="fkey">Today DII</span><span class="fval ${diiCl}">${inst.today_dii_cr>=0?'+':''}${inr(inst.today_dii_cr,0)} Cr</span></div>`:''}
       ${inst.fii_holding_change_pct!=null?`<div><span class="fkey">FII Holding Δ</span><span class="fval ${inst.fii_holding_change_pct>=0?'g':'r'}">${inst.fii_holding_change_pct>=0?'+':''}${inst.fii_holding_change_pct.toFixed(2)}%</span></div>`:''}
