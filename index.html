@@ -301,6 +301,29 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 
 .sa-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 
+/* ─── Cache Banner ──────────────────────────────────────────────────────── */
+.sa-cache-banner{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sa-cache-banner .sa-cache-info{font-size:12px;color:var(--blue)}
+.sa-cache-banner .sa-cache-age{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ─── Intraday Tab ──────────────────────────────────────────────────────── */
+.id-status-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.id-status-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
+.id-stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px}
+.id-stat-val{font-size:15px;font-weight:700}
+.id-rec-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px}
+.id-rec-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.id-rec-sym{font-size:18px;font-weight:800}
+.id-rec-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+.id-rec-badge.long{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.id-rec-badge.short{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.id-rec-badge.carry{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+.id-rec-badge.new{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+.id-progress-bar{height:6px;background:var(--card2);border-radius:3px;margin:8px 0;position:relative;overflow:visible}
+.id-progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.id-eval-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.id-eval-row:last-child{border-bottom:none}
+
 /* ─── Responsive ───────────────────────────────────────────────────────── */
 
 /* Tablet ≤900px */
@@ -452,8 +475,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 
 <!-- Tab Bar -->
 <div id="tabBar" class="tab-bar">
-  <button class="tab-btn active" id="tabMarket"  onclick="switchTab('market')">📊 Market Analysis</button>
-  <button class="tab-btn"        id="tabSearch"  onclick="switchTab('search')">🔍 Stock Analysis</button>
+  <button class="tab-btn active" id="tabMarket"   onclick="switchTab('market')">📊 Market Analysis</button>
+  <button class="tab-btn"        id="tabIntraday" onclick="switchTab('intraday')">⚡ Intraday</button>
+  <button class="tab-btn"        id="tabSearch"   onclick="switchTab('search')">🔍 Stock Analysis</button>
 </div>
 
 <div id="main">
@@ -461,6 +485,32 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   <div id="marketTab">
     <div id="content">
       <div class="empty"><div class="spin" style="width:36px;height:36px;border-width:3px;margin:0 auto 16px"></div><p>Loading…</p></div>
+    </div>
+  </div>
+
+  <!-- Intraday Tab -->
+  <div id="intradayTab" style="display:none; padding:14px 0">
+    <div class="id-status-bar" id="idStatusBar">
+      <div class="id-status-cell">
+        <div class="id-stat-label">SESSION</div>
+        <div class="id-stat-val" id="idSession">—</div>
+      </div>
+      <div class="id-status-cell">
+        <div class="id-stat-label">NEXT RUN IN</div>
+        <div class="id-stat-val" id="idNextRun">—</div>
+      </div>
+      <div class="id-status-cell">
+        <div class="id-stat-label">OPEN / MAX</div>
+        <div class="id-stat-val" id="idPositions">0 / 2</div>
+      </div>
+      <div class="id-status-cell">
+        <div class="id-stat-label">TODAY P&amp;L</div>
+        <div class="id-stat-val" id="idPnl">—</div>
+      </div>
+    </div>
+    <div id="idRunBar" class="sa-chips" style="margin-bottom:10px"></div>
+    <div id="idContent">
+      <div class="empty"><p>Loading intraday data…</p></div>
     </div>
   </div>
 
@@ -1235,16 +1285,21 @@ if(_tok) init(); else openTM();
 
 /* ── Tab Switching ─────────────────────────────────────────────────────── */
 function switchTab(tab) {
-  const isMarket = tab === 'market';
+  const isMarket   = tab === 'market';
+  const isIntraday = tab === 'intraday';
+  const isSearch   = tab === 'search';
   if (isMarket) stopLiveFeed();
-  document.getElementById('marketTab').style.display = isMarket ? 'block' : 'none';
-  document.getElementById('stockTab').style.display  = isMarket ? 'none' : 'block';
-  document.getElementById('tabMarket').classList.toggle('active', isMarket);
-  document.getElementById('tabSearch').classList.toggle('active', !isMarket);
-  if (!isMarket) {
+  document.getElementById('marketTab').style.display   = isMarket   ? 'block' : 'none';
+  document.getElementById('intradayTab').style.display = isIntraday ? 'block' : 'none';
+  document.getElementById('stockTab').style.display    = isSearch   ? 'block' : 'none';
+  document.getElementById('tabMarket').classList.toggle('active',   isMarket);
+  document.getElementById('tabIntraday').classList.toggle('active', isIntraday);
+  document.getElementById('tabSearch').classList.toggle('active',   isSearch);
+  if (isSearch) {
     setTimeout(() => document.getElementById('saInput').focus(), 50);
     renderSaRecent();
   }
+  if (isIntraday) loadIntradayTab();
 }
 
 /* ── Market Status & Live Price Feed ───────────────────────────────────── */
@@ -1541,12 +1596,13 @@ function updateSaFocus() {
   });
 }
 
-function selectSaStock(sym, name, sec) {
+async function selectSaStock(sym, name, sec) {
   _saSymbol = sym;
   document.getElementById('saInput').value = `${sym} — ${name}`;
   document.getElementById('saClear').style.display = '';
   document.getElementById('saBtn').disabled = false;
   hideSaDrop();
+  await checkAndShowCached(sym);
 }
 
 function hideSaDrop() {
@@ -1590,8 +1646,217 @@ function renderSaRecent() {
 }
 function quickAnalyse(sym) {
   const meta = FNO_MAP[sym] || {s: sym, n: sym, sec: ''};
-  selectSaStock(meta.s, meta.n, meta.sec);
-  triggerStockAnalysis();
+  selectSaStock(meta.s, meta.n, meta.sec); // async — auto-loads cached result
+}
+
+/* ── Intraday Tab ──────────────────────────────────────────────────────── */
+
+function getIntradaySession() {
+  const ist = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
+  const t = ist.getHours() * 60 + ist.getMinutes();
+  if (t < 555)  return {label:'Pre-Market',      color:'muted', emoji:'⚫', canTrade:false};
+  if (t < 570)  return {label:'Opening Auction',  color:'r',    emoji:'🔴', canTrade:false};
+  if (t < 660)  return {label:'Primary Session',  color:'g',    emoji:'🟢', canTrade:true};
+  if (t < 780)  return {label:'Mid-Session',      color:'y',    emoji:'🟡', canTrade:true};
+  if (t < 870)  return {label:'Dead Zone',        color:'muted',emoji:'⚪', canTrade:false};
+  if (t < 915)  return {label:'Power Hour',       color:'',     emoji:'🟠', canTrade:true};
+  if (t < 930)  return {label:'Pre-Close',        color:'r',    emoji:'🔴', canTrade:false};
+  return {label:'Market Closed', color:'muted', emoji:'⚫', canTrade:false};
+}
+
+const ID_RUNS = [9*60+30, 10*60+30, 11*60+30, 12*60+30, 13*60+30, 14*60+30, 15*60+0];
+
+function getNextRunIn() {
+  const ist = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
+  const t = ist.getHours() * 60 + ist.getMinutes();
+  const next = ID_RUNS.find(r => r > t);
+  if (!next) return 'Market closed';
+  const diff = next - t;
+  return `${String(Math.floor(diff/60)).padStart(2,'0')}:${String(diff%60).padStart(2,'0')}`;
+}
+
+let _idClockTmr = null;
+function startIdClock() {
+  clearInterval(_idClockTmr);
+  _idClockTmr = setInterval(() => {
+    const sess = getIntradaySession();
+    const el = document.getElementById('idSession');
+    if (el) el.textContent = `${sess.emoji} ${sess.label}`;
+    const nr = document.getElementById('idNextRun');
+    if (nr) nr.textContent = getNextRunIn();
+  }, 1000);
+}
+
+async function loadIntradayTab() {
+  startIdClock();
+  const sess = getIntradaySession();
+  const idSess = document.getElementById('idSession');
+  if (idSess) idSess.textContent = `${sess.emoji} ${sess.label}`;
+  const idNr = document.getElementById('idNextRun');
+  if (idNr) idNr.textContent = getNextRunIn();
+
+  try {
+    const today = new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Kolkata'});
+    const files = await ghList(`intraday`);
+    const todayFiles = files
+      .filter(f => f.name.startsWith(today) && f.name.endsWith('.json'))
+      .sort((a,b) => b.name.localeCompare(a.name));
+
+    const runBar = document.getElementById('idRunBar');
+    if (todayFiles.length) {
+      runBar.innerHTML = '<span class="sa-chip-lbl">Today\'s runs:</span>' +
+        todayFiles.map(f => {
+          const time = f.name.replace(today+'_','').replace('.json','').replace(/(\d{2})(\d{2})/,'$1:$2');
+          return `<button class="sa-chip" onclick="loadIntradayRun('${esc(f.name)}')">${time}</button>`;
+        }).join('');
+      await loadIntradayRun(todayFiles[0].name);
+    } else {
+      document.getElementById('idContent').innerHTML =
+        '<div class="empty"><p>No intraday runs today yet.</p><p style="font-size:11px;color:var(--muted)">First run at 9:30 AM IST</p></div>';
+    }
+  } catch(e) {
+    document.getElementById('idContent').innerHTML =
+      `<div class="empty"><p>⚠️ ${esc(e.message)}</p></div>`;
+  }
+}
+
+async function loadIntradayRun(filename) {
+  try {
+    const f = await ghGet(`intraday/${filename}`);
+    const data = JSON.parse(b64dec(f.content));
+    renderIntradayRun(data);
+  } catch(e) {
+    document.getElementById('idContent').innerHTML =
+      `<div class="empty"><p>⚠️ Load error: ${esc(e.message)}</p></div>`;
+  }
+}
+
+function renderIntradayRun(d) {
+  const rs = d.risk_status || {};
+  document.getElementById('idPositions').textContent = `${rs.open_positions||0} / 2`;
+  const pnl = rs.realised_pnl_today;
+  const pnlEl = document.getElementById('idPnl');
+  if (pnlEl && pnl != null) {
+    pnlEl.textContent = `₹${pnl >= 0 ? '+' : ''}${pnl.toLocaleString('en-IN')}`;
+    pnlEl.className = 'id-stat-val ' + (pnl >= 0 ? 'g' : 'r');
+  }
+
+  let html = '';
+
+  const ev = d.previous_run_evaluation;
+  if (ev && ev.evaluations && ev.evaluations.length) {
+    html += `<div class="sa-card">
+      <div class="sa-card-title">Previous Run Evaluation — Run ${d.run_number > 1 ? d.run_number - 1 : '?'}</div>`;
+    const sm = ev.summary || {};
+    html += `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+      ${sm.target1_hit||0} T1 · ${sm.target2_hit||0} T2 · ${sm.stopped||0} Stopped · ${sm.active||0} Active
+      ${sm.win_rate_today != null ? ` · WR: ${sm.win_rate_today.toFixed(0)}%` : ''}
+    </div>`;
+    for (const rec of ev.evaluations) {
+      const dirCls = rec.direction === 'LONG' ? 'g' : 'r';
+      const statusEmoji = {TARGET1_HIT:'✅',TARGET2_HIT:'🏆',STOPPED:'⛔',ACTIVE:'🔄',NOT_TRIGGERED:'⏳',TIME_EXIT:'⏰'}[rec.status] || '?';
+      html += `<div class="id-eval-row">
+        <span><b>${esc(rec.symbol)}</b> <span class="${dirCls}">${rec.direction}</span></span>
+        <span style="color:var(--muted)">${rec.entry_price != null ? inr(rec.entry_price,0) : '—'} → ${inr(rec.current_price||0,0)}</span>
+        <span class="${(rec.pnl_pct||0) >= 0 ? 'g':'r'}">${rec.pnl_pct != null ? (rec.pnl_pct >= 0?'+':'')+rec.pnl_pct.toFixed(2)+'%' : '—'}</span>
+        <span>${statusEmoji} ${esc(rec.status||'')}</span>
+      </div>`;
+      if (rec.action_required && rec.action_required !== 'Monitor' && rec.action_required !== 'CARRY_FORWARD') {
+        html += `<div style="font-size:11px;color:var(--yellow);padding:2px 0 6px 8px">↳ ${esc(rec.action_required)}</div>`;
+      }
+    }
+    html += '</div>';
+  }
+
+  const recs = d.recommendations || [];
+  if (recs.length) {
+    html += `<div class="sa-card-title" style="margin:4px 0 8px">${recs.length} RECOMMENDATION${recs.length!==1?'S':''} — ${esc((d.session||'').replace(/_/g,' ').toUpperCase())}</div>`;
+    for (const rec of recs) html += renderIntradayRecCard(rec);
+  } else if (d.session === 'dead_zone') {
+    html += '<div class="sa-card"><div class="sa-card-title">⚪ Dead Zone</div><p style="font-size:12px;color:var(--muted)">No new entries 1:00–2:30 PM. Monitoring carry-forwards only.</p></div>';
+  } else {
+    html += '<div class="sa-card"><p style="font-size:12px;color:var(--muted)">No HIGH confidence setups found this run.</p></div>';
+  }
+
+  document.getElementById('idContent').innerHTML = html;
+}
+
+function renderIntradayRecCard(rec) {
+  const isCarry = rec.is_carry_forward;
+  const dir = (rec.direction||'').toUpperCase();
+  const dirCls = dir === 'LONG' ? 'long' : 'short';
+  const conf = rec.confidence != null ? Math.round(rec.confidence * 100) : null;
+  const sl = rec.stop_loss, t2 = rec.target2, cmp = rec.cmp;
+  let progressPct = 0;
+  if (sl != null && t2 != null && cmp != null && t2 !== sl)
+    progressPct = Math.max(0, Math.min(100, ((cmp - sl) / (t2 - sl)) * 100));
+  const progressColor = progressPct > 66 ? 'var(--green)' : progressPct > 33 ? 'var(--yellow)' : 'var(--red)';
+  const t1Hit = rec.target1_hit ? '✅' : '';
+  return `<div class="id-rec-card">
+    <div class="id-rec-header">
+      <div class="id-rec-sym">${esc(rec.symbol||'')}</div>
+      <div class="id-rec-badge ${dirCls}">${dir === 'LONG' ? '🟢' : '🔴'} ${dir}</div>
+      <div class="id-rec-badge ${isCarry ? 'carry' : 'new'}">${isCarry ? '🔄 CARRY' : '🆕 NEW'}</div>
+      <div style="font-size:11px;color:var(--muted)">${esc((rec.strategy||'').replace(/_/g,' '))}</div>
+      ${conf != null ? `<div style="margin-left:auto;font-size:11px"><b>HIGH ${conf}%</b></div>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px;margin-bottom:8px">
+      <div><span style="color:var(--muted)">Entry</span><br><b>${rec.entry_range ? inr(rec.entry_range[0],0)+'–'+inr(rec.entry_range[1],0) : '—'}</b></div>
+      <div><span style="color:var(--muted)">Stop Loss</span><br><b class="r">${rec.stop_loss!=null?inr(rec.stop_loss,0):'—'}</b></div>
+      <div><span style="color:var(--muted)">R:R</span><br><b class="y">${esc(rec.risk_reward||'—')}</b></div>
+      <div><span style="color:var(--muted)">Target 1</span><br><b class="g">${rec.target1!=null?inr(rec.target1,0):'—'} ${t1Hit}</b></div>
+      <div><span style="color:var(--muted)">Target 2</span><br><b class="g">${rec.target2!=null?inr(rec.target2,0):'—'}</b></div>
+      <div><span style="color:var(--muted)">Hold until</span><br><b>${esc(rec.max_hold_until||'15:15')}</b></div>
+    </div>
+    <div style="display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap">
+      ${rec.vwap != null ? `<span>VWAP: <b class="text">${inr(rec.vwap,0)}</b></span>` : ''}
+      ${rec.vs_vwap_pct != null ? `<span>vs VWAP: <b class="${rec.vs_vwap_pct>=0?'g':'r'}">${rec.vs_vwap_pct>=0?'+':''}${rec.vs_vwap_pct.toFixed(2)}%</b></span>` : ''}
+      ${rec.volume_ratio != null ? `<span>Vol: <b class="text">${rec.volume_ratio.toFixed(1)}x</b></span>` : ''}
+      ${rec.cmp != null ? `<span>CMP: <b class="text">${inr(rec.cmp,0)}</b></span>` : ''}
+    </div>
+    <div class="id-progress-bar">
+      <div class="id-progress-fill" style="width:${progressPct}%;background:${progressColor}"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted)">
+      <span>SL ${rec.stop_loss!=null?inr(rec.stop_loss,0):'—'}</span>
+      <span>Entry ${rec.entry_trigger!=null?inr(rec.entry_trigger,0):'—'}</span>
+      <span>T2 ${rec.target2!=null?inr(rec.target2,0):'—'}</span>
+    </div>
+    ${rec.reasoning ? `<div style="font-size:11px;color:var(--muted);margin-top:8px;background:var(--card2);padding:7px;border-radius:6px;line-height:1.5">${esc(rec.reasoning)}</div>` : ''}
+  </div>`;
+}
+
+/* ── Cached Result ─────────────────────────────────────────────────────── */
+async function checkAndShowCached(sym) {
+  if (!_tok) return;
+  try {
+    const f = await fetch(`${API}/repos/${REPO}/contents/analyses/on_demand/${sym}_latest.json`,
+      { headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json' } });
+    if (!f.ok) return;
+    const fd = await f.json();
+    if (!fd.content) return;
+    const data = JSON.parse(b64dec(fd.content));
+    renderSaAnalysis(data, true);
+  } catch (_) {}
+}
+
+function renderSaCacheBanner(d) {
+  const genAt = d.generated_at ? new Date(d.generated_at) : null;
+  if (!genAt) return '';
+  const genStr = genAt.toLocaleString('en-IN', {timeZone:'Asia/Kolkata', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  const ageMs  = Date.now() - genAt.getTime();
+  const ageMins = Math.floor(ageMs / 60000);
+  let ageLabel;
+  if (ageMins < 60)        ageLabel = `${ageMins} min${ageMins !== 1 ? 's' : ''} ago`;
+  else if (ageMins < 1440) ageLabel = `${Math.floor(ageMins/60)} hr${Math.floor(ageMins/60) !== 1 ? 's' : ''} ago`;
+  else                     ageLabel = `${Math.floor(ageMins/1440)} day${Math.floor(ageMins/1440) !== 1 ? 's' : ''} ago`;
+  return `<div class="sa-cache-banner">
+    <div>
+      <div class="sa-cache-info">📋 Showing saved result — generated ${esc(genStr)} IST</div>
+      <div class="sa-cache-age">⏱ ${esc(ageLabel)} &nbsp;·&nbsp; Run fresh to get latest prices &amp; signals</div>
+    </div>
+    <button class="btn btn-green" style="font-size:12px;padding:5px 12px" onclick="triggerStockAnalysis()">Run Fresh ↺</button>
+  </div>`;
 }
 
 /* ── Trigger Analysis ──────────────────────────────────────────────────── */
@@ -1720,9 +1985,10 @@ function renderSaStepList(steps) {
 }
 
 /* ── Render Full Analysis ──────────────────────────────────────────────── */
-function renderSaAnalysis(d) {
+function renderSaAnalysis(d, isCached = false) {
   const el = document.getElementById('saResults');
   let html = '';
+  if (isCached) html += renderSaCacheBanner(d);
   html += renderSaHeader(d);
   html += renderSaSignal(d);
   html += renderSaTechnicals(d);
