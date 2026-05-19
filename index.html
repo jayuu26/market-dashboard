@@ -75,9 +75,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .sdot.err{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-#schedSel{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;font-family:inherit;outline:none}
-#schedSel:focus{border-color:var(--blue)}
-#schedMsg{font-size:11px;color:var(--muted)}
 
 /* ─── Main ──────────────────────────────────────────────────────────────── */
 #main{padding:0 16px;max-width:1400px;margin:0 auto}
@@ -388,7 +385,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   .hdr-top{height:auto;min-height:44px;padding:6px 10px;gap:5px;flex-wrap:wrap}
   .hdr-sep{display:none}
   #clock{display:none}
-  #schedSel,#schedMsg{display:none}
   .hdr-right{margin-left:auto}
   .status-bar{padding:0 10px;font-size:11px;gap:6px}
 
@@ -499,8 +495,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <div class="hdr-sep"></div>
     <button class="btn btn-green btn-sm" id="runBtn" onclick="triggerRun()">▶ Run Now</button>
     <div class="hdr-sep"></div>
-    <select id="schedSel" onchange="onSchedChange(this.value)" title="Schedule"></select>
-    <span id="schedMsg"></span>
+    <span id="schedBadge" style="font-size:11px;color:var(--muted);white-space:nowrap">⏰ 9:00 AM &amp; 10:00 PM IST</span>
     <div class="hdr-right">
       <span id="clock"></span>
       <button class="btn btn-ghost btn-sm" onclick="openTM()">🔑 Token</button>
@@ -605,13 +600,6 @@ const WF_PATH = '.github/workflows/main.yml';
 const DIR     = 'analyses';
 const API     = 'https://api.github.com';
 
-const SCHEDS = {
-  '9:15 AM':  '45 3 * * 1-5',
-  '9:30 AM':  '0 4 * * 1-5',
-  '10:00 AM': '30 4 * * 1-5',
-  '10:30 AM': '0 5 * * 1-5',
-  '11:00 AM': '30 5 * * 1-5',
-};
 
 let _tok = localStorage.getItem('gh_token') || '';
 let _byDate = {};
@@ -1281,36 +1269,8 @@ async function triggerRun(){
   finally{btn.disabled=false;btn.textContent='▶ Run Now';}
 }
 
-/* ── Schedule ──────────────────────────────────────────────────────────── */
-async function loadSchedule(){
-  const sel=document.getElementById('schedSel');
-  try{
-    const f=await ghGet(WF_PATH);
-    const yaml=b64dec(f.content);
-    const cur=(yaml.match(/cron:\s*'([^']+)'/))||[];
-    const curCron=(cur[1]||'').trim();
-    sel.innerHTML=Object.entries(SCHEDS).map(([lbl,cron])=>
-      `<option value="${cron}"${cron===curCron?' selected':''}>${lbl} IST</option>`
-    ).join('');
-    if(!sel.value&&curCron) sel.insertAdjacentHTML('afterbegin',`<option value="${curCron}" selected>Custom</option>`);
-  }catch(e){sel.innerHTML='<option>Error</option>';}
-}
-
-async function onSchedChange(newCron){
-  if(!newCron) return;
-  const lbl=Object.entries(SCHEDS).find(([,c])=>c===newCron)?.[0]||newCron;
-  const msg=document.getElementById('schedMsg');
-  msg.textContent='⏳';
-  try{
-    const f=await ghGet(WF_PATH);
-    const yaml=b64dec(f.content);
-    const updated=yaml.replace(/cron:\s*'[^']+'/, `cron: '${newCron}'`);
-    if(updated===yaml){msg.textContent='✅';return;}
-    await ghPut(WF_PATH,updated,`chore: schedule → ${lbl} IST`,f.sha);
-    msg.textContent='✅';
-    toast(`Schedule → ${lbl} IST`,'ok');
-  }catch(e){msg.textContent='❌';toast(e.message,'err');}
-}
+/* ── Schedule (informational only — fixed in main.yml) ─────────────────── */
+function loadSchedule(){ /* no-op: schedule badge is static */ }
 
 /* ── Init ──────────────────────────────────────────────────────────────── */
 async function init(){
