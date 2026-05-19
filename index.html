@@ -306,6 +306,45 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .sa-cache-banner .sa-cache-info{font-size:12px;color:var(--blue)}
 .sa-cache-banner .sa-cache-age{font-size:11px;color:var(--muted);margin-top:2px}
 
+/* ─── Paper Trades Tab ──────────────────────────────────────────────────── */
+.pt-perf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.pt-perf-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
+.pt-perf-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px}
+.pt-perf-val{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.pt-date-group{margin-bottom:14px}
+.pt-date-hdr{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;cursor:pointer;user-select:none;font-size:12px;margin-bottom:6px}
+.pt-date-hdr:hover{border-color:var(--dim)}
+.pt-date-toggle{color:var(--muted);font-size:10px;margin-left:auto}
+.pt-date-body{display:flex;flex-direction:column;gap:6px}
+.pt-date-body.collapsed{display:none}
+.pt-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
+.pt-card.open{border-left:3px solid var(--blue)}
+.pt-card.win{border-left:3px solid var(--green)}
+.pt-card.loss{border-left:3px solid var(--red)}
+.pt-card.closed{border-left:3px solid var(--muted)}
+.pt-sym{font-size:14px;font-weight:700;min-width:80px}
+.pt-dir{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.pt-dir.long{background:rgba(16,185,129,.2);color:var(--green)}
+.pt-dir.short{background:rgba(239,68,68,.2);color:var(--red)}
+.pt-fields{display:flex;gap:14px;flex-wrap:wrap;flex:1}
+.pt-field{display:flex;flex-direction:column;gap:1px}
+.pt-field .fkey{font-size:10px}
+.pt-field .fval{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.pt-pnl-badge{margin-left:auto;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.pt-pnl-badge.win{background:rgba(16,185,129,.15);color:var(--green)}
+.pt-pnl-badge.loss{background:rgba(239,68,68,.15);color:var(--red)}
+.pt-pnl-badge.open{background:rgba(59,130,246,.12);color:var(--blue)}
+.pt-status-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.pt-st-open{background:rgba(59,130,246,.15);color:var(--blue)}
+.pt-st-win{background:rgba(16,185,129,.15);color:var(--green)}
+.pt-st-loss{background:rgba(239,68,68,.15);color:var(--red)}
+.pt-st-closed{background:rgba(107,114,128,.15);color:var(--muted)}
+.pt-strat-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.pt-strat-badge{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px}
+.pt-toolbar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px}
+.pt-refresh-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;padding:6px 14px;border-radius:8px;cursor:pointer;transition:color .15s,border-color .15s}
+.pt-refresh-btn:hover{color:var(--text);border-color:var(--dim)}
+
 /* ─── Intraday Tab ──────────────────────────────────────────────────────── */
 .id-status-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .id-status-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
@@ -478,6 +517,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   <button class="tab-btn active" id="tabMarket"   onclick="switchTab('market')">📊 Market Analysis</button>
   <button class="tab-btn"        id="tabIntraday" onclick="switchTab('intraday')">⚡ Intraday</button>
   <button class="tab-btn"        id="tabSearch"   onclick="switchTab('search')">🔍 Stock Analysis</button>
+  <button class="tab-btn"        id="tabPaper"    onclick="switchTab('paper')">📋 Paper Trades</button>
 </div>
 
 <div id="main">
@@ -511,6 +551,13 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <div id="idRunBar" class="sa-chips" style="margin-bottom:10px"></div>
     <div id="idContent">
       <div class="empty"><p>Loading intraday data…</p></div>
+    </div>
+  </div>
+
+  <!-- Paper Trades Tab -->
+  <div id="paperTab" style="display:none; padding:14px 0">
+    <div id="paperContent">
+      <div class="empty"><div class="spin" style="width:32px;height:32px;border-width:3px;margin:0 auto 14px"></div><p>Loading paper trades…</p></div>
     </div>
   </div>
 
@@ -1271,6 +1318,7 @@ async function init(){
     renderNav();
     await Promise.all([loadAndRender(),loadSchedule(),pollStatus()]);
     _pollTmr=setInterval(pollStatus,30000);
+    loadPaperTradesTab();
   }catch(e){
     if(e.message==='invalid_token'){toast('Invalid token','err');openTM();}
     else{document.getElementById('content').innerHTML=`<div class="empty"><h2>⚠️ Error</h2><p>${esc(e.message)}</p></div>`;toast(e.message,'err');}
@@ -1288,18 +1336,22 @@ function switchTab(tab) {
   const isMarket   = tab === 'market';
   const isIntraday = tab === 'intraday';
   const isSearch   = tab === 'search';
+  const isPaper    = tab === 'paper';
   if (isMarket) stopLiveFeed();
   document.getElementById('marketTab').style.display   = isMarket   ? 'block' : 'none';
   document.getElementById('intradayTab').style.display = isIntraday ? 'block' : 'none';
   document.getElementById('stockTab').style.display    = isSearch   ? 'block' : 'none';
+  document.getElementById('paperTab').style.display    = isPaper    ? 'block' : 'none';
   document.getElementById('tabMarket').classList.toggle('active',   isMarket);
   document.getElementById('tabIntraday').classList.toggle('active', isIntraday);
   document.getElementById('tabSearch').classList.toggle('active',   isSearch);
+  document.getElementById('tabPaper').classList.toggle('active',    isPaper);
   if (isSearch) {
     setTimeout(() => document.getElementById('saInput').focus(), 50);
     renderSaRecent();
   }
   if (isIntraday) loadIntradayTab();
+  if (isPaper) loadPaperTradesTab();
 }
 
 /* ── Market Status & Live Price Feed ───────────────────────────────────── */
@@ -2273,6 +2325,155 @@ function copySaAnalysis() {
 
 async function sendSaToTelegram() {
   toast('Telegram send requires backend — coming soon', 'info');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PAPER TRADES TAB
+══════════════════════════════════════════════════════════════════════════ */
+
+let _ptLoaded = false;
+
+async function loadPaperTradesTab(force) {
+  if (_ptLoaded && !force) return;
+  _ptLoaded = false;
+  const el = document.getElementById('paperContent');
+  el.innerHTML = '<div class="empty"><div class="spin" style="width:32px;height:32px;border-width:3px;margin:0 auto 14px"></div><p>Loading paper trades…</p></div>';
+  try {
+    const files = await ghList('paper_trades');
+    const jsonFiles = files.filter(f => f.name.match(/^\d{4}-\d{2}-\d{2}\.json$/)).sort((a,b) => b.name.localeCompare(a.name));
+    if (!jsonFiles.length) {
+      el.innerHTML = '<div class="pt-toolbar"><button class="pt-refresh-btn" onclick="loadPaperTradesTab(true)">↻ Refresh</button></div><div class="empty"><h2>No paper trades yet</h2><p>Trades will appear here after the workflow runs.</p></div>';
+      _ptLoaded = true;
+      return;
+    }
+    const allTrades = [];
+    await Promise.all(jsonFiles.map(async f => {
+      try {
+        const fd = await ghGet(`paper_trades/${f.name}`);
+        const data = JSON.parse(b64dec(fd.content));
+        const list = Array.isArray(data) ? data : (data.trades || [data]);
+        for (const t of list) { t._file_date = f.name.replace('.json',''); }
+        allTrades.push(...list);
+      } catch(_) {}
+    }));
+    el.innerHTML = '<div class="pt-toolbar"><button class="pt-refresh-btn" onclick="loadPaperTradesTab(true)">↻ Refresh</button></div>' + renderPaperTrades(allTrades);
+    _ptLoaded = true;
+  } catch(e) {
+    _ptLoaded = false;
+    el.innerHTML = `<div class="pt-toolbar"><button class="pt-refresh-btn" onclick="loadPaperTradesTab(true)">↻ Refresh</button></div><div class="empty"><h2>⚠️ Error loading trades</h2><p>${esc(e.message)}</p><p style="color:var(--muted);font-size:12px;margin-top:8px">Make sure your GitHub token is set and has Contents: Read permission.</p></div>`;
+    toast(e.message, 'err');
+  }
+}
+
+function computePtPerf(trades) {
+  const closed = trades.filter(t => ['TARGET1_HIT','TARGET2_HIT','STOPPED'].includes(t.status));
+  const wins   = closed.filter(t => ['TARGET1_HIT','TARGET2_HIT'].includes(t.status));
+  const losses = closed.filter(t => t.status === 'STOPPED');
+  const winRate = closed.length ? Math.round(wins.length / closed.length * 100) : null;
+  const avgWin  = wins.length
+    ? wins.reduce((s,t) => s + (t.pnl_pct != null ? +t.pnl_pct : (t.status==='TARGET2_HIT' ? (t.target2_pct||0) : (t.target1_pct||0))), 0) / wins.length
+    : null;
+  const avgLoss = losses.length
+    ? losses.reduce((s,t) => s + (t.pnl_pct != null ? +t.pnl_pct : 0), 0) / losses.length
+    : null;
+  const expectancy = (avgWin != null && avgLoss != null && closed.length)
+    ? (wins.length / closed.length) * avgWin + (losses.length / closed.length) * avgLoss
+    : null;
+  const byStrat = {};
+  for (const t of closed) {
+    const k = t.strategy || 'UNKNOWN';
+    if (!byStrat[k]) byStrat[k] = {total:0, wins:0};
+    byStrat[k].total++;
+    if (['TARGET1_HIT','TARGET2_HIT'].includes(t.status)) byStrat[k].wins++;
+  }
+  return {total: trades.length, closed: closed.length, wins: wins.length, winRate, avgWin, avgLoss, expectancy, byStrat};
+}
+
+function renderPaperTrades(trades) {
+  if (!trades.length) return '<div class="empty"><h2>No trades found</h2></div>';
+  const perf = computePtPerf(trades);
+  let html = '';
+  html += `<div class="sa-card" style="margin-bottom:14px">
+    <div class="sa-card-title">Performance Summary — ${perf.total} total · ${perf.closed} closed · ${trades.filter(t=>t.status==='OPEN').length} open</div>
+    <div class="pt-perf-grid">
+      <div class="pt-perf-cell"><div class="pt-perf-label">Win Rate</div><div class="pt-perf-val ${perf.winRate!=null&&perf.winRate>=50?'g':'r'}">${perf.winRate!=null?perf.winRate+'%':'—'}</div></div>
+      <div class="pt-perf-cell"><div class="pt-perf-label">Avg Win</div><div class="pt-perf-val g">${perf.avgWin!=null?'+'+perf.avgWin.toFixed(2)+'%':'—'}</div></div>
+      <div class="pt-perf-cell"><div class="pt-perf-label">Avg Loss</div><div class="pt-perf-val r">${perf.avgLoss!=null?perf.avgLoss.toFixed(2)+'%':'—'}</div></div>
+      <div class="pt-perf-cell"><div class="pt-perf-label">Expectancy</div><div class="pt-perf-val ${perf.expectancy!=null&&perf.expectancy>=0?'g':'r'}">${perf.expectancy!=null?(perf.expectancy>=0?'+':'')+perf.expectancy.toFixed(2)+'%':'—'}</div></div>
+      <div class="pt-perf-cell"><div class="pt-perf-label">Wins / Closed</div><div class="pt-perf-val">${perf.wins} / ${perf.closed}</div></div>
+    </div>`;
+  if (Object.keys(perf.byStrat).length) {
+    html += `<div class="pt-strat-row">`;
+    for (const [k,v] of Object.entries(perf.byStrat)) {
+      const wr = v.total ? Math.round(v.wins/v.total*100) : 0;
+      html += `<div class="pt-strat-badge"><b>${esc(k)}</b> &nbsp; ${v.wins}/${v.total} &nbsp; <span class="${wr>=50?'g':'r'}">${wr}%</span></div>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  const byDate = {};
+  for (const t of trades) {
+    const d = t._file_date || (t.generated_at ? t.generated_at.slice(0,10) : 'unknown');
+    (byDate[d] = byDate[d] || []).push(t);
+  }
+  const dates = Object.keys(byDate).sort((a,b) => b.localeCompare(a));
+  for (const date of dates) {
+    const group = byDate[date];
+    const openCount = group.filter(t => t.status === 'OPEN').length;
+    const closedGroup = group.filter(t => t.status !== 'OPEN');
+    const winsGroup   = closedGroup.filter(t => ['TARGET1_HIT','TARGET2_HIT'].includes(t.status));
+    const groupId = 'ptg-' + date;
+    html += `<div class="pt-date-group">
+      <div class="pt-date-hdr" onclick="togglePtGroup('${groupId}')">
+        <b>${esc(date)}</b>
+        <span style="color:var(--muted)">${group.length} trade${group.length!==1?'s':''}</span>
+        ${openCount ? `<span style="color:var(--blue)">${openCount} open</span>` : ''}
+        ${closedGroup.length ? `<span class="${winsGroup.length/closedGroup.length>=0.5?'g':'r'}">${winsGroup.length}/${closedGroup.length} wins</span>` : ''}
+        <span class="pt-date-toggle" id="${groupId}-icon">▲</span>
+      </div>
+      <div class="pt-date-body" id="${groupId}">
+        ${group.map(t => renderPtCard(t)).join('')}
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
+function togglePtGroup(id) {
+  const body = document.getElementById(id);
+  const icon = document.getElementById(id + '-icon');
+  if (!body) return;
+  const collapsed = body.classList.toggle('collapsed');
+  if (icon) icon.textContent = collapsed ? '▼' : '▲';
+}
+
+function renderPtCard(t) {
+  const isOpen   = t.status === 'OPEN';
+  const isWin    = ['TARGET1_HIT','TARGET2_HIT'].includes(t.status);
+  const isLoss   = t.status === 'STOPPED';
+  const cardCls  = isOpen ? 'open' : isWin ? 'win' : isLoss ? 'loss' : 'closed';
+  const dirCls   = (t.direction||'').toLowerCase();
+  const statusLabel = {OPEN:'Open',TARGET1_HIT:'T1 Hit',TARGET2_HIT:'T2 Hit',STOPPED:'Stopped',CLOSED:'Closed'}[t.status] || esc(t.status||'');
+  const stBadgeCls = isOpen ? 'pt-st-open' : isWin ? 'pt-st-win' : isLoss ? 'pt-st-loss' : 'pt-st-closed';
+  let pnlPct = t.pnl_pct != null ? +t.pnl_pct : null;
+  if (pnlPct == null && isWin) pnlPct = t.status === 'TARGET2_HIT' ? (t.target2_pct || t.target1_pct || null) : (t.target1_pct || null);
+  const pnlStr = pnlPct != null ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%' : (isOpen ? 'OPEN' : '—');
+  const pnlBadgeCls = isOpen ? 'open' : pnlPct != null && pnlPct >= 0 ? 'win' : 'loss';
+  const genTime = t.generated_at ? new Date(t.generated_at).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) : '';
+  return `<div class="pt-card ${cardCls}">
+    <div class="pt-sym">${esc(t.symbol||'')}</div>
+    <span class="pt-dir ${dirCls}">${esc(t.direction||'')}</span>
+    <div class="pt-fields">
+      <div class="pt-field"><span class="fkey">Entry</span><span class="fval">${t.entry_low!=null&&t.entry_high!=null?inr(t.entry_low,0)+'–'+inr(t.entry_high,0):t.cmp_at_signal!=null?inr(t.cmp_at_signal,0):'—'}</span></div>
+      <div class="pt-field"><span class="fkey">T1</span><span class="fval g">${t.target1!=null?inr(t.target1,0)+(t.target1_pct?' (+'+t.target1_pct+'%)':''):'—'}</span></div>
+      <div class="pt-field"><span class="fkey">SL</span><span class="fval r">${t.stop_loss!=null?inr(t.stop_loss,0):'—'}</span></div>
+      ${t.confidence?`<div class="pt-field"><span class="fkey">Conf</span><span class="fval ${confCls(t.confidence)}">${esc(t.confidence)}</span></div>`:''}
+      ${t.strategy?`<div class="pt-field"><span class="fkey">Strategy</span><span class="fval" style="font-size:10px">${esc(t.strategy)}</span></div>`:''}
+      ${genTime?`<div class="pt-field"><span class="fkey">Time</span><span class="fval" style="font-size:10px;color:var(--muted)">${esc(genTime)}</span></div>`:''}
+    </div>
+    <span class="pt-status-badge ${stBadgeCls}">${esc(statusLabel)}</span>
+    <span class="pt-pnl-badge ${pnlBadgeCls}">${esc(pnlStr)}</span>
+  </div>`;
 }
 </script>
 </body>
