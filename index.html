@@ -999,6 +999,17 @@ function parseMDToJSON(md){
 function render(d){
   const m=d.market||{};
   let html='';
+  // Detect empty run: no setups and no market trend parsed
+  const isEmpty = !(d.longs||[]).length && !(d.shorts||[]).length && !(d.watchlist||[]).length
+    && !(m.nifty||{}).trend && !(m.bias);
+  if (isEmpty) {
+    html += `<div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:18px">⚠️</span>
+      <div>
+        <div style="font-weight:600;color:var(--yellow);margin-bottom:2px">Empty run — analysis did not produce setups</div>
+        <div style="font-size:12px;color:var(--muted)">Claude's response was incomplete or had no valid market data for this run. Check the next run or the .md file on GitHub for details.</div>
+      </div></div>`;
+  }
   html+=renderMarket(m);
   if((d.longs||[]).length||(d.shorts||[]).length) html+=renderSetups(d.longs||[],d.shorts||[]);
   if((d.best_trade||{}).symbol) html+=renderBestTrade(d.best_trade||{});
