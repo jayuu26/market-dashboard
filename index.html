@@ -75,6 +75,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .sdot.err{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
+#schedSel{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;font-family:inherit;outline:none}
+#schedSel:focus{border-color:var(--blue)}
+#schedMsg{font-size:11px;color:var(--muted)}
 
 /* ─── Main ──────────────────────────────────────────────────────────────── */
 #main{padding:0 16px;max-width:1400px;margin:0 auto}
@@ -230,6 +233,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 
 /* Analysis sections */
 .sa-results{}
+.sa-cache-banner{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sa-cache-banner .sa-cache-info{font-size:12px;color:var(--blue)}
+.sa-cache-banner .sa-cache-age{font-size:11px;color:var(--muted);margin-top:2px}
 .sa-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px}
 .sa-card-title{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px;font-weight:700}
 
@@ -298,10 +304,23 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 
 .sa-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 
-/* ─── Cache Banner ──────────────────────────────────────────────────────── */
-.sa-cache-banner{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.sa-cache-banner .sa-cache-info{font-size:12px;color:var(--blue)}
-.sa-cache-banner .sa-cache-age{font-size:11px;color:var(--muted);margin-top:2px}
+/* ─── Intraday Tab ──────────────────────────────────────────────────────── */
+.id-status-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.id-status-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
+.id-stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px}
+.id-stat-val{font-size:15px;font-weight:700}
+.id-rec-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px}
+.id-rec-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.id-rec-sym{font-size:18px;font-weight:800}
+.id-rec-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+.id-rec-badge.long{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.id-rec-badge.short{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.id-rec-badge.carry{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+.id-rec-badge.new{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+.id-progress-bar{height:6px;background:var(--card2);border-radius:3px;margin:8px 0;position:relative;overflow:visible}
+.id-progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.id-eval-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.id-eval-row:last-child{border-bottom:none}
 
 /* ─── Paper Trades Tab ──────────────────────────────────────────────────── */
 .pt-perf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
@@ -342,23 +361,59 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .pt-refresh-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;padding:6px 14px;border-radius:8px;cursor:pointer;transition:color .15s,border-color .15s}
 .pt-refresh-btn:hover{color:var(--text);border-color:var(--dim)}
 
-/* ─── Intraday Tab ──────────────────────────────────────────────────────── */
-.id-status-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-.id-status-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
-.id-stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px}
-.id-stat-val{font-size:15px;font-weight:700}
-.id-rec-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px}
-.id-rec-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.id-rec-sym{font-size:18px;font-weight:800}
-.id-rec-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
-.id-rec-badge.long{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
-.id-rec-badge.short{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
-.id-rec-badge.carry{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
-.id-rec-badge.new{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
-.id-progress-bar{height:6px;background:var(--card2);border-radius:3px;margin:8px 0;position:relative;overflow:visible}
-.id-progress-fill{height:100%;border-radius:3px;transition:width .3s}
-.id-eval-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
-.id-eval-row:last-child{border-bottom:none}
+/* ─── Screener Tab ──────────────────────────────────────────────────────── */
+#screenerTab{padding:14px 0}
+.scr-search-row{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start;flex-wrap:wrap}
+.scr-input-wrap{position:relative;flex:1;min-width:260px}
+.scr-input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 40px 10px 14px;border-radius:8px;font-size:14px;font-family:inherit;outline:none}
+.scr-input:focus{border-color:var(--blue)}
+.scr-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0}
+.scr-clear:hover{color:var(--text)}
+.scr-quick-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.scr-qbtn{background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:11px;padding:4px 11px;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.scr-qbtn:hover{border-color:var(--blue);color:var(--blue)}
+.scr-qbtn.active{background:rgba(59,130,246,.15);border-color:var(--blue);color:var(--blue)}
+.scr-interpret{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px}
+.scr-interpret-q{color:var(--blue);font-weight:600;margin-bottom:4px}
+.scr-interpret-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.scr-pill{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:2px 8px;font-size:10px;color:var(--muted)}
+.scr-ambig{margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.scr-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.scr-card.long{border-left:3px solid var(--green)}
+.scr-card.short{border-left:3px solid var(--red)}
+.scr-card-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px 10px;flex-wrap:wrap}
+.scr-rank{width:26px;height:26px;border-radius:50%;background:var(--card2);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.scr-sym{font-size:16px;font-weight:800}
+.scr-name{font-size:11px;color:var(--muted)}
+.scr-score{margin-left:auto;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:var(--blue);font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;white-space:nowrap}
+.scr-tags{display:flex;gap:4px;flex-wrap:wrap;padding:0 14px 10px}
+.scr-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid transparent}
+.scr-tag-bo{background:rgba(16,185,129,.12);color:var(--green);border-color:rgba(16,185,129,.3)}
+.scr-tag-vol{background:rgba(245,158,11,.12);color:var(--yellow);border-color:rgba(245,158,11,.3)}
+.scr-tag-news{background:rgba(59,130,246,.12);color:var(--blue);border-color:rgba(59,130,246,.3)}
+.scr-tag-flow{background:rgba(99,102,241,.12);color:#818cf8;border-color:rgba(99,102,241,.3)}
+.scr-tag-event{background:rgba(168,85,247,.12);color:#a855f7;border-color:rgba(168,85,247,.3)}
+.scr-tag-bd{background:rgba(239,68,68,.12);color:var(--red);border-color:rgba(239,68,68,.3)}
+.scr-tag-ban{background:var(--card2);color:var(--muted)}
+.scr-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px;padding:0 14px 10px;font-size:12px}
+.scr-metric-lbl{font-size:10px;color:var(--muted);margin-bottom:1px}
+.scr-news-row{padding:0 14px 10px;font-size:11px;display:flex;align-items:flex-start;gap:8px}
+.scr-news-badge{flex-shrink:0;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700}
+.scr-news-pos{background:rgba(16,185,129,.15);color:var(--green)}
+.scr-news-neg{background:rgba(239,68,68,.15);color:var(--red)}
+.scr-news-neu{background:rgba(107,114,128,.15);color:var(--muted)}
+.scr-trade-row{background:var(--card2);padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;border-top:1px solid var(--border)}
+.scr-dir-l{color:var(--green);font-weight:700;font-size:12px}
+.scr-dir-s{color:var(--red);font-weight:700;font-size:12px}
+.scr-actions{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.scr-sort-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;flex-wrap:wrap}
+.scr-sort-lbl{color:var(--muted)}
+.scr-sort-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .15s}
+.scr-sort-btn:hover,.scr-sort-btn.active{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.1)}
+.scr-stat{font-size:12px;color:var(--muted);margin-left:auto}
+.scr-loading{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:14px;text-align:center}
+.scr-server-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--yellow)}
+.scr-server-warn code{background:var(--card2);padding:1px 5px;border-radius:3px;font-size:11px;color:var(--text)}
 
 /* ─── Responsive ───────────────────────────────────────────────────────── */
 
@@ -385,6 +440,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   .hdr-top{height:auto;min-height:44px;padding:6px 10px;gap:5px;flex-wrap:wrap}
   .hdr-sep{display:none}
   #clock{display:none}
+  #schedSel,#schedMsg{display:none}
   .hdr-right{margin-left:auto}
   .status-bar{padding:0 10px;font-size:11px;gap:6px}
 
@@ -495,7 +551,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <div class="hdr-sep"></div>
     <button class="btn btn-green btn-sm" id="runBtn" onclick="triggerRun()">▶ Run Now</button>
     <div class="hdr-sep"></div>
-    <span id="schedBadge" style="font-size:11px;color:var(--muted);white-space:nowrap">⏰ 9:00 AM &amp; 10:00 PM IST</span>
+    <select id="schedSel" onchange="onSchedChange(this.value)" title="Schedule"></select>
+    <span id="schedMsg"></span>
     <div class="hdr-right">
       <span id="clock"></span>
       <button class="btn btn-ghost btn-sm" onclick="openTM()">🔑 Token</button>
@@ -513,6 +570,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   <button class="tab-btn"        id="tabIntraday" onclick="switchTab('intraday')">⚡ Intraday</button>
   <button class="tab-btn"        id="tabSearch"   onclick="switchTab('search')">🔍 Stock Analysis</button>
   <button class="tab-btn"        id="tabPaper"    onclick="switchTab('paper')">📋 Paper Trades</button>
+  <button class="tab-btn"        id="tabScreener" onclick="switchTab('screener')">🧲 Screener</button>
 </div>
 
 <div id="main">
@@ -525,6 +583,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 
   <!-- Intraday Tab -->
   <div id="intradayTab" style="display:none; padding:14px 0">
+    <!-- Session Status Bar -->
     <div class="id-status-bar" id="idStatusBar">
       <div class="id-status-cell">
         <div class="id-stat-label">SESSION</div>
@@ -543,7 +602,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
         <div class="id-stat-val" id="idPnl">—</div>
       </div>
     </div>
+    <!-- Run selector (today's runs) -->
     <div id="idRunBar" class="sa-chips" style="margin-bottom:10px"></div>
+    <!-- Main content -->
     <div id="idContent">
       <div class="empty"><p>Loading intraday data…</p></div>
     </div>
@@ -554,6 +615,60 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <div id="paperContent">
       <div class="empty"><div class="spin" style="width:32px;height:32px;border-width:3px;margin:0 auto 14px"></div><p>Loading paper trades…</p></div>
     </div>
+  </div>
+
+  <!-- Screener Tab -->
+  <div id="screenerTab" style="display:none">
+
+    <!-- Freshness banner (shows last GitHub Actions run time) -->
+    <div id="scrFreshBanner" style="font-size:11px;color:var(--muted);padding:4px 0 6px;display:none">
+      <span id="scrFreshText"></span>
+      &nbsp;·&nbsp; <a href="#" onclick="scrLoadMeta();return false" style="color:var(--yellow)">Refresh</a>
+    </div>
+    <!-- Stale warning (no data yet / first run) -->
+    <div id="scrStaleWarn" class="scr-server-warn" style="display:none">
+      ⏳ Screener data not yet available. GitHub Actions runs every 30 min during market hours (9:00–15:30 IST).
+      Results will appear automatically after the first run.
+    </div>
+
+    <!-- Search Row -->
+    <div class="scr-search-row" style="margin-top:4px">
+      <div class="scr-input-wrap">
+        <input class="scr-input" id="scrInput" type="text"
+          placeholder="🔍 Type in plain English… e.g. daily breakout with high volume"
+          autocomplete="off"
+          onkeydown="onScrKey(event)"
+          oninput="onScrInput()">
+        <button class="scr-clear" id="scrClear" onclick="clearScrSearch()" style="display:none">×</button>
+      </div>
+      <button class="btn btn-green" id="scrBtn" onclick="triggerScreener()">Screen ▶</button>
+    </div>
+
+    <!-- Quick Screens -->
+    <div class="scr-quick-row" id="scrQuickRow">
+      <button class="scr-qbtn" onclick="scrQuick('daily_breakout','🚀 Daily Breakout')">🚀 Daily Breakout</button>
+      <button class="scr-qbtn" onclick="scrQuick('weekly_breakout','📅 Weekly Breakout')">📅 Weekly Breakout</button>
+      <button class="scr-qbtn" onclick="scrQuick('volume_surge','🔥 Volume Surge')">🔥 Volume Surge</button>
+      <button class="scr-qbtn" onclick="scrQuick('results_this_week','📢 Results This Week')">📢 Results This Week</button>
+      <button class="scr-qbtn" onclick="scrQuick('news_24h','📰 News 24h')">📰 News 24h</button>
+      <button class="scr-qbtn" onclick="scrQuick('near_52w_high','💹 Near 52W High')">💹 Near 52W High</button>
+      <button class="scr-qbtn" onclick="scrQuick('short_candidates','📉 Short Setup')">📉 Short Setup</button>
+      <button class="scr-qbtn" onclick="scrQuick('bulk_deals','💰 Bulk Deals')">💰 Bulk Deals</button>
+      <button class="scr-qbtn" onclick="scrQuick('fii_buying','🧲 FII Buying')">🧲 FII Buying</button>
+      <button class="scr-qbtn" onclick="scrQuick('gap_up','⚡ Gap Up >2%')">⚡ Gap Up &gt;2%</button>
+      <button class="scr-qbtn" onclick="scrQuick('rsi_oversold','🔄 RSI Oversold')">🔄 RSI Oversold</button>
+      <button class="scr-qbtn" onclick="scrQuick('multi_tf_bullish','📐 Multi-TF Bullish')">📐 Multi-TF Bullish</button>
+    </div>
+
+    <!-- Loading -->
+    <div class="scr-loading" id="scrLoading" style="display:none">
+      <div class="spin" style="width:28px;height:28px;border-width:3px;margin:0 auto 10px"></div>
+      <div style="font-size:13px;font-weight:600" id="scrLoadMsg">Screening…</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Applying filters across 180 F&amp;O stocks</div>
+    </div>
+
+    <!-- Results container -->
+    <div id="scrResults"></div>
   </div>
 
   <!-- Stock Analysis Tab -->
@@ -600,6 +715,13 @@ const WF_PATH = '.github/workflows/main.yml';
 const DIR     = 'analyses';
 const API     = 'https://api.github.com';
 
+const SCHEDS = {
+  '9:15 AM':  '45 3 * * 1-5',
+  '9:30 AM':  '0 4 * * 1-5',
+  '10:00 AM': '30 4 * * 1-5',
+  '10:30 AM': '0 5 * * 1-5',
+  '11:00 AM': '30 5 * * 1-5',
+};
 
 let _tok = localStorage.getItem('gh_token') || '';
 let _byDate = {};
@@ -784,20 +906,6 @@ async function loadFileList() {
 }
 
 /* ── Nav ───────────────────────────────────────────────────────────────── */
-function sessionLabel(time){
-  // time is "HH:MM" IST
-  const [h,m]=time.split(':').map(Number), t=h*60+m;
-  if(t < 10*60)    return 'Pre-Mkt';
-  if(t < 13*60)    return 'Mid-Sess';
-  if(t < 15*60+30) return 'EOD';
-  return 'Post-Mkt';
-}
-// Pick the best default run index: first run that has the pre-market label
-// (earliest run of the day) because post-market often has 0 setups.
-function bestRunIdx(runs){
-  // Prefer first run (pre-market / earliest) — it always has data from live prices
-  return 0;
-}
 function renderNav(){
   const date=_dates[_dIdx], runs=_byDate[date];
   document.getElementById('datePicker').value=date;
@@ -805,24 +913,24 @@ function renderNav(){
   sel.style.display='flex';
   sel.innerHTML=runs.map((r,i)=>
     `<span class="run-pill ${i===_rIdx?'active':''}" onclick="selectRun(${i})">` +
-    `${sessionLabel(r.time)} (${r.time})` +
+    `Run ${i+1} (${r.time})` +
     `<button class="run-del-btn" title="Delete this run" onclick="event.stopPropagation();deleteRun(${i})">🗑</button>` +
     `</span>`
   ).join('');
 }
 function onDateChange(){
   const v=document.getElementById('datePicker').value, i=_dates.indexOf(v);
-  if(i>=0){_dIdx=i;_rIdx=bestRunIdx(_byDate[v]);renderNav();loadAndRender();}
+  if(i>=0){_dIdx=i;_rIdx=_byDate[v].length-1;renderNav();loadAndRender();}
   else toast('No analysis for '+v,'err');
 }
 function shiftDate(d){
   const n=_dIdx+d;
   if(n<0||n>=_dates.length) return toast('No more dates','info');
-  _dIdx=n;_rIdx=bestRunIdx(_byDate[_dates[n]]);renderNav();loadAndRender();
+  _dIdx=n;_rIdx=_byDate[_dates[n]].length-1;renderNav();loadAndRender();
 }
 function goToday(){
   if(!_dates.length) return;
-  _dIdx=0;_rIdx=bestRunIdx(_byDate[_dates[0]]);renderNav();loadAndRender();
+  _dIdx=0;_rIdx=_byDate[_dates[0]].length-1;renderNav();loadAndRender();
 }
 function selectRun(idx){_rIdx=idx;renderNav();loadAndRender();}
 
@@ -1001,17 +1109,6 @@ function parseMDToJSON(md){
 function render(d){
   const m=d.market||{};
   let html='';
-  // Detect empty run: no setups and no market trend parsed
-  const isEmpty = !(d.longs||[]).length && !(d.shorts||[]).length && !(d.watchlist||[]).length
-    && !(m.nifty||{}).trend && !(m.bias);
-  if (isEmpty) {
-    html += `<div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
-      <span style="font-size:18px">⚠️</span>
-      <div>
-        <div style="font-weight:600;color:var(--yellow);margin-bottom:2px">Empty run — analysis did not produce setups</div>
-        <div style="font-size:12px;color:var(--muted)">Claude's response was incomplete or had no valid market data for this run. Check the next run or the .md file on GitHub for details.</div>
-      </div></div>`;
-  }
   html+=renderMarket(m);
   if((d.longs||[]).length||(d.shorts||[]).length) html+=renderSetups(d.longs||[],d.shorts||[]);
   if((d.best_trade||{}).symbol) html+=renderBestTrade(d.best_trade||{});
@@ -1060,7 +1157,7 @@ function renderMarket(m){
     <div class="idx-card">
       <div class="idx-label">India VIX</div>
       <div class="idx-value">${m.vix!=null?(+m.vix).toFixed(2):'—'}</div>
-      <div class="idx-chg ${m.vix!=null&&m.vix>18?'r':m.vix!=null&&m.vix<14?'g':'y'}">${m.vix!=null?(m.vix>18?'High':'Low'):'—'}</div>
+      <div class="idx-chg ${m.vix!=null&&m.vix>24?'r':m.vix!=null&&m.vix>18?'y':m.vix!=null&&m.vix<14?'g':'y'}">${(()=>{if(m.vix==null)return'—';if(m.vix>24)return'🔴 CRISIS';if(m.vix>18)return'🟠 HIGH_VOL';if(m.vix<14)return'🔵 LOW_VOL';return'🟢 NORMAL';})()}</div>
       <div class="idx-sub">${m.gift_nifty?'GIFT: '+inr(m.gift_nifty):''}</div>
     </div>
 
@@ -1092,7 +1189,7 @@ function renderMarket(m){
       <div class="gl-col">
         ${glRow('FII Flow', fiiStr)}
         ${glRow('DII Flow', diiStr)}
-        ${glRow('India VIX', m.vix!=null?`<span class="${m.vix>18?'r':m.vix<14?'g':'y'}">${(+m.vix).toFixed(2)}</span>`:'—')}
+        ${glRow('India VIX', m.vix!=null?`<span class="${m.vix>24?'r':m.vix>18?'y':m.vix<14?'g':'g'}">${(+m.vix).toFixed(2)} ${m.vix>24?'CRISIS':m.vix>18?'HIGH_VOL':m.vix<14?'LOW_VOL':'NORMAL'}</span>`:'—')}
       </div>
     </div>
   </div>`;
@@ -1283,8 +1380,36 @@ async function triggerRun(){
   finally{btn.disabled=false;btn.textContent='▶ Run Now';}
 }
 
-/* ── Schedule (informational only — fixed in main.yml) ─────────────────── */
-function loadSchedule(){ /* no-op: schedule badge is static */ }
+/* ── Schedule ──────────────────────────────────────────────────────────── */
+async function loadSchedule(){
+  const sel=document.getElementById('schedSel');
+  try{
+    const f=await ghGet(WF_PATH);
+    const yaml=b64dec(f.content);
+    const cur=(yaml.match(/cron:\s*'([^']+)'/))||[];
+    const curCron=(cur[1]||'').trim();
+    sel.innerHTML=Object.entries(SCHEDS).map(([lbl,cron])=>
+      `<option value="${cron}"${cron===curCron?' selected':''}>${lbl} IST</option>`
+    ).join('');
+    if(!sel.value&&curCron) sel.insertAdjacentHTML('afterbegin',`<option value="${curCron}" selected>Custom</option>`);
+  }catch(e){sel.innerHTML='<option>Error</option>';}
+}
+
+async function onSchedChange(newCron){
+  if(!newCron) return;
+  const lbl=Object.entries(SCHEDS).find(([,c])=>c===newCron)?.[0]||newCron;
+  const msg=document.getElementById('schedMsg');
+  msg.textContent='⏳';
+  try{
+    const f=await ghGet(WF_PATH);
+    const yaml=b64dec(f.content);
+    const updated=yaml.replace(/cron:\s*'[^']+'/, `cron: '${newCron}'`);
+    if(updated===yaml){msg.textContent='✅';return;}
+    await ghPut(WF_PATH,updated,`chore: schedule → ${lbl} IST`,f.sha);
+    msg.textContent='✅';
+    toast(`Schedule → ${lbl} IST`,'ok');
+  }catch(e){msg.textContent='❌';toast(e.message,'err');}
+}
 
 /* ── Init ──────────────────────────────────────────────────────────────── */
 async function init(){
@@ -1299,10 +1424,11 @@ async function init(){
     }
     const todayIST=new Intl.DateTimeFormat('sv',{timeZone:'Asia/Kolkata'}).format(new Date());
     const ti=_dates.indexOf(todayIST);
-    _dIdx=ti>=0?ti:0;_rIdx=bestRunIdx(_byDate[_dates[_dIdx]]);
+    _dIdx=ti>=0?ti:0;_rIdx=_byDate[_dates[_dIdx]].length-1;
     renderNav();
     await Promise.all([loadAndRender(),loadSchedule(),pollStatus()]);
     _pollTmr=setInterval(pollStatus,30000);
+    // Background-load paper trades so the tab is ready when clicked
     loadPaperTradesTab();
   }catch(e){
     if(e.message==='invalid_token'){toast('Invalid token','err');openTM();}
@@ -1322,21 +1448,32 @@ function switchTab(tab) {
   const isIntraday = tab === 'intraday';
   const isSearch   = tab === 'search';
   const isPaper    = tab === 'paper';
+  const isScreener = tab === 'screener';
   if (isMarket) stopLiveFeed();
-  document.getElementById('marketTab').style.display   = isMarket   ? 'block' : 'none';
-  document.getElementById('intradayTab').style.display = isIntraday ? 'block' : 'none';
-  document.getElementById('stockTab').style.display    = isSearch   ? 'block' : 'none';
-  document.getElementById('paperTab').style.display    = isPaper    ? 'block' : 'none';
+  document.getElementById('marketTab').style.display    = isMarket   ? 'block' : 'none';
+  document.getElementById('intradayTab').style.display  = isIntraday ? 'block' : 'none';
+  document.getElementById('stockTab').style.display     = isSearch   ? 'block' : 'none';
+  document.getElementById('paperTab').style.display     = isPaper    ? 'block' : 'none';
+  document.getElementById('screenerTab').style.display  = isScreener ? 'block' : 'none';
   document.getElementById('tabMarket').classList.toggle('active',   isMarket);
   document.getElementById('tabIntraday').classList.toggle('active', isIntraday);
   document.getElementById('tabSearch').classList.toggle('active',   isSearch);
   document.getElementById('tabPaper').classList.toggle('active',    isPaper);
+  document.getElementById('tabScreener').classList.toggle('active', isScreener);
   if (isSearch) {
     setTimeout(() => document.getElementById('saInput').focus(), 50);
     renderSaRecent();
   }
-  if (isIntraday) loadIntradayTab();
-  if (isPaper) loadPaperTradesTab();
+  if (isIntraday) {
+    loadIntradayTab();
+  }
+  if (isPaper) {
+    loadPaperTradesTab();
+  }
+  if (isScreener) {
+    scrLoadMeta();
+    setTimeout(() => document.getElementById('scrInput').focus(), 50);
+  }
 }
 
 /* ── Market Status & Live Price Feed ───────────────────────────────────── */
@@ -1639,6 +1776,7 @@ async function selectSaStock(sym, name, sec) {
   document.getElementById('saClear').style.display = '';
   document.getElementById('saBtn').disabled = false;
   hideSaDrop();
+  // Auto-load cached result if available
   await checkAndShowCached(sym);
 }
 
@@ -1688,6 +1826,7 @@ function quickAnalyse(sym) {
 
 /* ── Intraday Tab ──────────────────────────────────────────────────────── */
 
+// Session clock — updates every second
 function getIntradaySession() {
   const ist = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
   const t = ist.getHours() * 60 + ist.getMinutes();
@@ -1701,6 +1840,7 @@ function getIntradaySession() {
   return {label:'Market Closed', color:'muted', emoji:'⚫', canTrade:false};
 }
 
+// Next run times in minutes since midnight
 const ID_RUNS = [9*60+30, 10*60+30, 11*60+30, 12*60+30, 13*60+30, 14*60+30, 15*60+0];
 
 function getNextRunIn() {
@@ -1733,19 +1873,22 @@ async function loadIntradayTab() {
   if (idNr) idNr.textContent = getNextRunIn();
 
   try {
+    // List intraday run files for today
     const today = new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Kolkata'});
     const files = await ghList(`intraday`);
     const todayFiles = files
       .filter(f => f.name.startsWith(today) && f.name.endsWith('.json'))
-      .sort((a,b) => b.name.localeCompare(a.name));
+      .sort((a,b) => b.name.localeCompare(a.name));  // latest first
 
+    // Build run selector chips
     const runBar = document.getElementById('idRunBar');
     if (todayFiles.length) {
       runBar.innerHTML = '<span class="sa-chip-lbl">Today\'s runs:</span>' +
-        todayFiles.map(f => {
+        todayFiles.map((f,i) => {
           const time = f.name.replace(today+'_','').replace('.json','').replace(/(\d{2})(\d{2})/,'$1:$2');
           return `<button class="sa-chip" onclick="loadIntradayRun('${esc(f.name)}')">${time}</button>`;
         }).join('');
+      // Auto-load latest run
       await loadIntradayRun(todayFiles[0].name);
     } else {
       document.getElementById('idContent').innerHTML =
@@ -1769,6 +1912,7 @@ async function loadIntradayRun(filename) {
 }
 
 function renderIntradayRun(d) {
+  // Update status bar
   const rs = d.risk_status || {};
   document.getElementById('idPositions').textContent = `${rs.open_positions||0} / 2`;
   const pnl = rs.realised_pnl_today;
@@ -1780,6 +1924,7 @@ function renderIntradayRun(d) {
 
   let html = '';
 
+  // Previous run evaluation
   const ev = d.previous_run_evaluation;
   if (ev && ev.evaluations && ev.evaluations.length) {
     html += `<div class="sa-card">
@@ -1805,10 +1950,13 @@ function renderIntradayRun(d) {
     html += '</div>';
   }
 
+  // Recommendations
   const recs = d.recommendations || [];
   if (recs.length) {
-    html += `<div class="sa-card-title" style="margin:4px 0 8px">${recs.length} RECOMMENDATION${recs.length!==1?'S':''} — ${esc((d.session||'').replace(/_/g,' ').toUpperCase())}</div>`;
-    for (const rec of recs) html += renderIntradayRecCard(rec);
+    html += `<div class="sa-card-title" style="margin:4px 0 8px">${recs.length} RECOMMENDATION${recs.length!==1?'S':''} — ${esc((d.session||'').replace('_',' ').toUpperCase())}</div>`;
+    for (const rec of recs) {
+      html += renderIntradayRecCard(rec);
+    }
   } else if (d.session === 'dead_zone') {
     html += '<div class="sa-card"><div class="sa-card-title">⚪ Dead Zone</div><p style="font-size:12px;color:var(--muted)">No new entries 1:00–2:30 PM. Monitoring carry-forwards only.</p></div>';
   } else {
@@ -1823,18 +1971,23 @@ function renderIntradayRecCard(rec) {
   const dir = (rec.direction||'').toUpperCase();
   const dirCls = dir === 'LONG' ? 'long' : 'short';
   const conf = rec.confidence != null ? Math.round(rec.confidence * 100) : null;
+
+  // Progress bar: position of CMP between SL and T2
   const sl = rec.stop_loss, t2 = rec.target2, cmp = rec.cmp;
   let progressPct = 0;
-  if (sl != null && t2 != null && cmp != null && t2 !== sl)
+  if (sl != null && t2 != null && cmp != null && t2 !== sl) {
     progressPct = Math.max(0, Math.min(100, ((cmp - sl) / (t2 - sl)) * 100));
+  }
   const progressColor = progressPct > 66 ? 'var(--green)' : progressPct > 33 ? 'var(--yellow)' : 'var(--red)';
+
   const t1Hit = rec.target1_hit ? '✅' : '';
+
   return `<div class="id-rec-card">
     <div class="id-rec-header">
       <div class="id-rec-sym">${esc(rec.symbol||'')}</div>
       <div class="id-rec-badge ${dirCls}">${dir === 'LONG' ? '🟢' : '🔴'} ${dir}</div>
       <div class="id-rec-badge ${isCarry ? 'carry' : 'new'}">${isCarry ? '🔄 CARRY' : '🆕 NEW'}</div>
-      <div style="font-size:11px;color:var(--muted)">${esc((rec.strategy||'').replace(/_/g,' '))}</div>
+      <div style="font-size:11px;color:var(--muted)">${esc(rec.strategy||'').replace('_',' ')}</div>
       ${conf != null ? `<div style="margin-left:auto;font-size:11px"><b>HIGH ${conf}%</b></div>` : ''}
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px;margin-bottom:8px">
@@ -1869,12 +2022,12 @@ async function checkAndShowCached(sym) {
   try {
     const f = await fetch(`${API}/repos/${REPO}/contents/analyses/on_demand/${sym}_latest.json`,
       { headers: { Authorization: `token ${_tok}`, Accept: 'application/vnd.github.v3+json' } });
-    if (!f.ok) return;
+    if (!f.ok) return; // No cached result
     const fd = await f.json();
     if (!fd.content) return;
     const data = JSON.parse(b64dec(fd.content));
-    renderSaAnalysis(data, true);
-  } catch (_) {}
+    renderSaAnalysis(data, true); // isCached = true
+  } catch (_) {} // Silent fail — first run or network error
 }
 
 function renderSaCacheBanner(d) {
@@ -1884,7 +2037,7 @@ function renderSaCacheBanner(d) {
   const ageMs  = Date.now() - genAt.getTime();
   const ageMins = Math.floor(ageMs / 60000);
   let ageLabel;
-  if (ageMins < 60)        ageLabel = `${ageMins} min${ageMins !== 1 ? 's' : ''} ago`;
+  if (ageMins < 60)       ageLabel = `${ageMins} min${ageMins !== 1 ? 's' : ''} ago`;
   else if (ageMins < 1440) ageLabel = `${Math.floor(ageMins/60)} hr${Math.floor(ageMins/60) !== 1 ? 's' : ''} ago`;
   else                     ageLabel = `${Math.floor(ageMins/1440)} day${Math.floor(ageMins/1440) !== 1 ? 's' : ''} ago`;
   return `<div class="sa-cache-banner">
@@ -2110,8 +2263,8 @@ function renderSaSignal(d) {
   const dirCls = act === 'LONG' ? 'long' : act === 'SHORT' ? 'short' : 'hold';
   const dirEmoji = act === 'LONG' ? '🟢 LONG' : act === 'SHORT' ? '🔴 SHORT' : '🟡 HOLD';
   const fp = s.filters_passed || {};
-  const filt = ['session_guard','fo_ban','mtf_trend','volatility_regime','confirmation_candle'];
-  const filtLabels = ['Session','F&O Ban','MTF','Vol','Confirm'];
+  const filt = ['market_regime','session_guard','fo_ban','mtf_trend','volatility_regime','confirmation_candle'];
+  const filtLabels = ['Regime','Session','F&O Ban','MTF','Vol','Confirm'];
   return `<div class="sa-card">
     <div class="sa-card-title">AI Signal</div>
     <div class="sa-sig-dir ${dirCls}">${dirEmoji}  |  Confidence: ${s.confidence!=null?Math.round(s.confidence*100)+'%':'—'}  |  Strategy: ${esc(s.strategy||'—')}</div>
@@ -2320,7 +2473,7 @@ let _ptLoaded = false;
 
 async function loadPaperTradesTab(force) {
   if (_ptLoaded && !force) return;
-  _ptLoaded = false;
+  _ptLoaded = false;  // will be set true only on success
   const el = document.getElementById('paperContent');
   el.innerHTML = '<div class="empty"><div class="spin" style="width:32px;height:32px;border-width:3px;margin:0 auto 14px"></div><p>Loading paper trades…</p></div>';
   try {
@@ -2331,6 +2484,7 @@ async function loadPaperTradesTab(force) {
       _ptLoaded = true;
       return;
     }
+    // Fetch all files in parallel
     const allTrades = [];
     await Promise.all(jsonFiles.map(async f => {
       try {
@@ -2344,10 +2498,19 @@ async function loadPaperTradesTab(force) {
     el.innerHTML = '<div class="pt-toolbar"><button class="pt-refresh-btn" onclick="loadPaperTradesTab(true)">↻ Refresh</button></div>' + renderPaperTrades(allTrades);
     _ptLoaded = true;
   } catch(e) {
+    // Reset flag so next click retries
     _ptLoaded = false;
-    el.innerHTML = `<div class="pt-toolbar"><button class="pt-refresh-btn" onclick="loadPaperTradesTab(true)">↻ Refresh</button></div><div class="empty"><h2>⚠️ Error loading trades</h2><p>${esc(e.message)}</p><p style="color:var(--muted);font-size:12px;margin-top:8px">Make sure your GitHub token is set and has Contents: Read permission.</p></div>`;
+    el.innerHTML = `<div class="pt-toolbar"><button class="pt-refresh-btn" onclick="loadPaperTradesTab(true)">↻ Refresh</button></div><div class="empty"><h2>⚠️ Error loading trades</h2><p>${esc(e.message)}</p><p style="color:var(--muted);font-size:12px;margin-top:8px">Make sure your GitHub token is set (top-right) and has Contents: Read permission.</p></div>`;
     toast(e.message, 'err');
   }
+}
+
+function ptRegimeColor(mode) {
+  if (!mode) return 'var(--muted)';
+  if (mode === 'CRISIS')   return 'var(--red)';
+  if (mode === 'HIGH_VOL') return 'var(--yellow)';
+  if (mode === 'LOW_VOL')  return 'var(--blue)';
+  return 'var(--green)';
 }
 
 function computePtPerf(trades) {
@@ -2356,7 +2519,7 @@ function computePtPerf(trades) {
   const losses = closed.filter(t => t.status === 'STOPPED');
   const winRate = closed.length ? Math.round(wins.length / closed.length * 100) : null;
   const avgWin  = wins.length
-    ? wins.reduce((s,t) => s + (t.pnl_pct != null ? +t.pnl_pct : (t.status==='TARGET2_HIT' ? (t.target2_pct||0) : (t.target1_pct||0))), 0) / wins.length
+    ? wins.reduce((s,t) => s + (t.pnl_pct != null ? +t.pnl_pct : (t.status==='TARGET1_HIT' ? (t.target1_pct||0) : (t.target2_pct||0))), 0) / wins.length
     : null;
   const avgLoss = losses.length
     ? losses.reduce((s,t) => s + (t.pnl_pct != null ? +t.pnl_pct : 0), 0) / losses.length
@@ -2364,6 +2527,7 @@ function computePtPerf(trades) {
   const expectancy = (avgWin != null && avgLoss != null && closed.length)
     ? (wins.length / closed.length) * avgWin + (losses.length / closed.length) * avgLoss
     : null;
+  // By strategy
   const byStrat = {};
   for (const t of closed) {
     const k = t.strategy || 'UNKNOWN';
@@ -2376,17 +2540,36 @@ function computePtPerf(trades) {
 
 function renderPaperTrades(trades) {
   if (!trades.length) return '<div class="empty"><h2>No trades found</h2></div>';
+
   const perf = computePtPerf(trades);
   let html = '';
+
+  // ── Performance Summary ──
   html += `<div class="sa-card" style="margin-bottom:14px">
     <div class="sa-card-title">Performance Summary — ${perf.total} total · ${perf.closed} closed · ${trades.filter(t=>t.status==='OPEN').length} open</div>
     <div class="pt-perf-grid">
-      <div class="pt-perf-cell"><div class="pt-perf-label">Win Rate</div><div class="pt-perf-val ${perf.winRate!=null&&perf.winRate>=50?'g':'r'}">${perf.winRate!=null?perf.winRate+'%':'—'}</div></div>
-      <div class="pt-perf-cell"><div class="pt-perf-label">Avg Win</div><div class="pt-perf-val g">${perf.avgWin!=null?'+'+perf.avgWin.toFixed(2)+'%':'—'}</div></div>
-      <div class="pt-perf-cell"><div class="pt-perf-label">Avg Loss</div><div class="pt-perf-val r">${perf.avgLoss!=null?perf.avgLoss.toFixed(2)+'%':'—'}</div></div>
-      <div class="pt-perf-cell"><div class="pt-perf-label">Expectancy</div><div class="pt-perf-val ${perf.expectancy!=null&&perf.expectancy>=0?'g':'r'}">${perf.expectancy!=null?(perf.expectancy>=0?'+':'')+perf.expectancy.toFixed(2)+'%':'—'}</div></div>
-      <div class="pt-perf-cell"><div class="pt-perf-label">Wins / Closed</div><div class="pt-perf-val">${perf.wins} / ${perf.closed}</div></div>
+      <div class="pt-perf-cell">
+        <div class="pt-perf-label">Win Rate</div>
+        <div class="pt-perf-val ${perf.winRate!=null&&perf.winRate>=50?'g':'r'}">${perf.winRate!=null?perf.winRate+'%':'—'}</div>
+      </div>
+      <div class="pt-perf-cell">
+        <div class="pt-perf-label">Avg Win</div>
+        <div class="pt-perf-val g">${perf.avgWin!=null?'+'+perf.avgWin.toFixed(2)+'%':'—'}</div>
+      </div>
+      <div class="pt-perf-cell">
+        <div class="pt-perf-label">Avg Loss</div>
+        <div class="pt-perf-val r">${perf.avgLoss!=null?perf.avgLoss.toFixed(2)+'%':'—'}</div>
+      </div>
+      <div class="pt-perf-cell">
+        <div class="pt-perf-label">Expectancy</div>
+        <div class="pt-perf-val ${perf.expectancy!=null&&perf.expectancy>=0?'g':'r'}">${perf.expectancy!=null?(perf.expectancy>=0?'+':'')+perf.expectancy.toFixed(2)+'%':'—'}</div>
+      </div>
+      <div class="pt-perf-cell">
+        <div class="pt-perf-label">Wins / Closed</div>
+        <div class="pt-perf-val">${perf.wins} / ${perf.closed}</div>
+      </div>
     </div>`;
+  // By-strategy badges
   if (Object.keys(perf.byStrat).length) {
     html += `<div class="pt-strat-row">`;
     for (const [k,v] of Object.entries(perf.byStrat)) {
@@ -2396,12 +2579,15 @@ function renderPaperTrades(trades) {
     html += `</div>`;
   }
   html += `</div>`;
+
+  // ── Group by date ──
   const byDate = {};
   for (const t of trades) {
     const d = t._file_date || (t.generated_at ? t.generated_at.slice(0,10) : 'unknown');
     (byDate[d] = byDate[d] || []).push(t);
   }
   const dates = Object.keys(byDate).sort((a,b) => b.localeCompare(a));
+
   for (const date of dates) {
     const group = byDate[date];
     const openCount = group.filter(t => t.status === 'OPEN').length;
@@ -2424,6 +2610,335 @@ function renderPaperTrades(trades) {
   return html;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   SCREENER TAB
+   Results are pre-computed by GitHub Actions every 30 min during market hours
+   and served as static JSON from raw.githubusercontent.com — no local server.
+══════════════════════════════════════════════════════════════════════════ */
+
+const SCR_RAW = `https://raw.githubusercontent.com/${REPO}/main/screener/cache/results`;
+let _scrLastQuery = '';
+let _scrResults   = null;
+let _scrSortBy    = 'score';
+let _scrSortOrder = 'desc';
+
+/* ── NL query → screen name mapping (client-side, no server needed) ─────── */
+function _nlToScreenName(q) {
+  const t = q.toLowerCase();
+  if (t.includes('weekly') && (t.includes('breakout') || t.includes('break'))) return 'weekly_breakout';
+  if ((t.includes('daily') || t.includes('day')) && (t.includes('breakout') || t.includes('break'))) return 'daily_breakout';
+  if (t.includes('breakout') || t.includes('break out')) return 'daily_breakout';
+  if (t.includes('volume surge') || t.includes('vol surge') || t.includes('volume spike') || t.includes('high volume') || t.includes('unusual volume')) return 'volume_surge';
+  if (t.includes('result') || t.includes('earning') || t.includes('quarterly')) return 'results_this_week';
+  if (t.includes('news') || t.includes('announcement')) return 'news_24h';
+  if (t.includes('52') || t.includes('52w') || t.includes('52 week') || t.includes('yearly high')) return 'near_52w_high';
+  if (t.includes('short') || t.includes('sell setup') || t.includes('bearish') || t.includes('short candidate')) return 'short_candidates';
+  if (t.includes('bulk') || t.includes('block deal')) return 'bulk_deals';
+  if (t.includes('fii') || t.includes('foreign') || t.includes('institutional buy')) return 'fii_buying';
+  if (t.includes('gap up') || t.includes('gapup') || t.includes('gap open')) return 'gap_up';
+  if (t.includes('oversold') || t.includes('rsi') || t.includes('rsi <') || t.includes('rsi below')) return 'rsi_oversold';
+  if (t.includes('multi') || t.includes('mtf') || t.includes('timeframe') || t.includes('multi tf') || t.includes('bullish setup')) return 'multi_tf_bullish';
+  return null;
+}
+
+/* ── Load meta.json to show freshness banner ────────────────────────────── */
+async function scrLoadMeta() {
+  try {
+    const r = await fetch(`${SCR_RAW}/meta.json?t=${Date.now()}`,
+      {signal: AbortSignal.timeout(5000)});
+    if (!r.ok) throw new Error('no data');
+    const meta = await r.json();
+
+    const genAt  = new Date(meta.generated_at);
+    const ageMins = Math.round((Date.now() - genAt.getTime()) / 60000);
+    const ageStr  = ageMins < 2   ? 'just now'
+                  : ageMins < 60  ? `${ageMins} min ago`
+                  : `${Math.round(ageMins/60)}h ago`;
+
+    document.getElementById('scrFreshText').textContent =
+      `✅ Data updated ${ageStr} (${meta.date} · ${meta.screens_computed?.length || 0} screens)`;
+    document.getElementById('scrFreshBanner').style.display = '';
+    document.getElementById('scrStaleWarn').style.display   = 'none';
+  } catch(_) {
+    document.getElementById('scrFreshBanner').style.display = 'none';
+    document.getElementById('scrStaleWarn').style.display   = '';
+  }
+}
+
+/* ── Input handlers ────────────────────────────────────────────────────── */
+function onScrInput() {
+  const q = document.getElementById('scrInput').value;
+  document.getElementById('scrClear').style.display = q ? '' : 'none';
+}
+
+function clearScrSearch() {
+  document.getElementById('scrInput').value = '';
+  document.getElementById('scrClear').style.display = 'none';
+  document.getElementById('scrResults').innerHTML = '';
+}
+
+function onScrKey(e) {
+  if (e.key === 'Enter') triggerScreener();
+}
+
+/* ── Quick screens ─────────────────────────────────────────────────────── */
+function scrQuick(screenName, label) {
+  document.querySelectorAll('.scr-qbtn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('scrInput').value = label;
+  document.getElementById('scrClear').style.display = '';
+  _loadScreenResult(screenName);
+}
+
+/* ── NL search trigger ──────────────────────────────────────────────────── */
+async function triggerScreener() {
+  const q = document.getElementById('scrInput').value.trim();
+  if (!q) return;
+  document.querySelectorAll('.scr-qbtn').forEach(b => b.classList.remove('active'));
+
+  const screenName = _nlToScreenName(q);
+  if (screenName) {
+    // Highlight the matching quick button
+    document.querySelectorAll('.scr-qbtn').forEach(b => {
+      if (b.getAttribute('onclick')?.includes(`'${screenName}'`)) b.classList.add('active');
+    });
+    _loadScreenResult(screenName);
+  } else {
+    // No match — show all screens as suggestions
+    document.getElementById('scrResults').innerHTML = `
+      <div class="scr-interpret" style="margin-bottom:10px">
+        <div class="scr-interpret-q">Could not map "<b>${esc(q)}</b>" to a specific screen — try one of the quick buttons above, or rephrase (e.g. "weekly breakout", "volume surge", "RSI oversold").</div>
+      </div>`;
+  }
+}
+
+/* ── Fetch pre-computed result from GitHub raw ──────────────────────────── */
+async function _loadScreenResult(screenName) {
+  const loadEl = document.getElementById('scrLoading');
+  const resEl  = document.getElementById('scrResults');
+  loadEl.style.display = '';
+  resEl.innerHTML = '';
+  document.getElementById('scrLoadMsg').textContent = `Loading ${screenName.replace(/_/g,' ')}…`;
+
+  try {
+    // cache-bust so browser doesn't serve a stale cached copy
+    const r = await fetch(`${SCR_RAW}/${screenName}.json?t=${Date.now()}`,
+      {signal: AbortSignal.timeout(15000)});
+    if (!r.ok) throw new Error(r.status === 404
+      ? 'Screener data not ready yet — GitHub Actions runs every 30 min during market hours.'
+      : `Fetch error ${r.status}`);
+    const data = await r.json();
+    _scrResults   = data;
+    _scrLastQuery = screenName;
+    loadEl.style.display = 'none';
+    renderScrResults(data);
+  } catch(e) {
+    loadEl.style.display = 'none';
+    resEl.innerHTML = `<div class="empty"><p style="color:var(--red)">${esc(e.message)}</p></div>`;
+    toast(e.message, 'err', 5000);
+  }
+}
+
+/* ── Render results ────────────────────────────────────────────────────── */
+function renderScrResults(data) {
+  const el    = document.getElementById('scrResults');
+  const intent = data.intent || {};
+  const results = data.results || [];
+
+  let html = '';
+
+  // Interpretation banner
+  if (intent.raw_query || intent.filters?.length) {
+    const filterPills = (intent.filters || []).map(f => {
+      const t = f.type;
+      if (t === 'breakout')     return `breakout=${f.timeframe||'daily'}`;
+      if (t === 'volume')       return `rvol${f.operator||'>'}${f.threshold}x`;
+      if (t === 'technical')    return `${f.indicator||''}${f.condition||''}${f.value||''}`;
+      if (t === 'price_action') return f.subtype||'price_action';
+      if (t === 'event')        return `${f.subtype||'event'} ≤${f.window_days}d`;
+      if (t === 'news')         return `news=${f.sentiment||'any'}`;
+      if (t === 'flow')         return f.subtype||'flow';
+      return t;
+    }).map(p => `<span class="scr-pill">${esc(p)}</span>`).join('');
+
+    const ambigHtml = intent.ambiguous
+      ? `<div class="scr-ambig">⚠️ Interpreted as above — <button class="btn btn-ghost btn-sm" onclick="document.getElementById('scrInput').focus()">Refine query</button></div>`
+      : '';
+
+    html += `<div class="scr-interpret">
+      <div class="scr-interpret-q">Interpreted: "${esc(intent.raw_query || '')}" — ${data.passed_filters} result${data.passed_filters!==1?'s':''} from ${data.total_universe} F&amp;O stocks</div>
+      <div class="scr-interpret-pills">${filterPills}</div>
+      ${ambigHtml}
+    </div>`;
+  }
+
+  if (!results.length) {
+    html += `<div class="empty"><p>No stocks matched your criteria.</p><p style="margin-top:8px;font-size:12px">Try broadening the filters or using a quick screen button above.</p></div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  // Sort bar
+  html += `<div class="scr-sort-row">
+    <span class="scr-sort-lbl">Sort by:</span>
+    <button class="scr-sort-btn ${_scrSortBy==='score'?'active':''}" onclick="scrSetSort('score','desc')">Score ▼</button>
+    <button class="scr-sort-btn ${_scrSortBy==='relative_volume'?'active':''}" onclick="scrSetSort('relative_volume','desc')">Volume</button>
+    <button class="scr-sort-btn ${_scrSortBy==='rsi'?'active':''}" onclick="scrSetSort('rsi','desc')">RSI</button>
+    <button class="scr-sort-btn ${_scrSortBy==='price_change'?'active':''}" onclick="scrSetSort('price_change','desc')">Change %</button>
+    <span class="scr-stat">${data.passed_filters} stocks · ${data.total_universe||180} universe</span>
+  </div>`;
+
+  for (const s of results) {
+    html += renderScrCard(s, intent);
+  }
+
+  const genAt = data.generated_at ? new Date(data.generated_at) : null;
+  const genStr = genAt ? genAt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}) + ' IST' : '';
+  html += `<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0">
+    Pre-computed by GitHub Actions${genStr ? ' · refreshed ' + genStr : ''} · updates every 30 min during market hours
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+function renderScrCard(s, intent) {
+  const dir       = s.trade_suggestion?.direction || 'LONG';
+  const dirCls    = dir === 'LONG' ? 'long' : 'short';
+  const price     = s.price || {};
+  const vol       = s.volume || {};
+  const tech      = s.technicals || {};
+  const bo        = s.breakout || {};
+  const ev        = s.events || {};
+  const news      = s.news || {};
+  const flows     = s.flows || {};
+  const trade     = s.trade_suggestion || {};
+  const matched   = s.matched_filters || [];
+
+  // Tags
+  let tags = '';
+  if (bo.daily_breakout)   tags += '<span class="scr-tag scr-tag-bo">🚀 Daily Breakout</span>';
+  if (bo.weekly_breakout)  tags += '<span class="scr-tag scr-tag-bo">📅 Weekly Breakout</span>';
+  if (bo.monthly_breakout) tags += '<span class="scr-tag scr-tag-bo">📈 Monthly Breakout</span>';
+  if (bo.daily_breakdown)  tags += '<span class="scr-tag scr-tag-bd">⬇️ Breakdown</span>';
+  const rvol = vol.relative_volume || 0;
+  if (rvol >= 3.0)  tags += '<span class="scr-tag scr-tag-vol">🔥 Extreme Vol</span>';
+  else if (rvol >= 1.5) tags += '<span class="scr-tag scr-tag-vol">📊 High Vol</span>';
+  if (price.gap_pct > 1.5) tags += `<span class="scr-tag scr-tag-vol">⚡ Gap +${price.gap_pct?.toFixed(1)}%</span>`;
+  if (price.gap_pct < -1.5) tags += `<span class="scr-tag scr-tag-vol">⬇️ Gap ${price.gap_pct?.toFixed(1)}%</span>`;
+  if (news.has_news_24h)   tags += '<span class="scr-tag scr-tag-news">📰 News</span>';
+  if (flows.bulk_deal_today || flows.block_deal_today) tags += '<span class="scr-tag scr-tag-flow">💰 Bulk Deal</span>';
+  if (flows.fii_activity === 'net_buyer') tags += '<span class="scr-tag scr-tag-flow">🧲 FII Buying</span>';
+  if (ev.days_to_result != null && ev.days_to_result <= 7) tags += `<span class="scr-tag scr-tag-event">📢 Results in ${ev.days_to_result}d</span>`;
+  if (s.in_fo_ban)         tags += '<span class="scr-tag scr-tag-ban">🔒 F&O Ban</span>';
+  if (tech.from_52w_high_pct != null && tech.from_52w_high_pct > -2) tags += '<span class="scr-tag scr-tag-bo">💹 Near 52W High</span>';
+
+  // News row
+  let newsHtml = '';
+  if (news.has_news_24h && news.headline) {
+    const sentCls = news.sentiment === 'positive' ? 'scr-news-pos' : news.sentiment === 'negative' ? 'scr-news-neg' : 'scr-news-neu';
+    const sentLbl = news.sentiment === 'positive' ? '📈 +ve' : news.sentiment === 'negative' ? '📉 -ve' : '📄 Neutral';
+    newsHtml = `<div class="scr-news-row">
+      <span class="scr-news-badge ${sentCls}">${esc(sentLbl)}</span>
+      <span>${esc(news.headline)}</span>
+    </div>`;
+  }
+
+  // FII row (inline in trade row)
+  const fiiHtml = flows.fii_activity && flows.fii_activity !== 'unknown'
+    ? `<span>🧲 FII: ${esc(flows.fii_activity === 'net_buyer' ? 'Buying' : 'Selling')}</span>`
+    : '';
+
+  // Change color
+  const chgPct = price.change_pct || 0;
+  const chgCl  = chgPct >= 0 ? 'g' : 'r';
+  const chgAr  = chgPct >= 0 ? '▲' : '▼';
+
+  // MTF stars
+  const mtf = tech.mtf_alignment_score || 0;
+  const mtfStars = '★'.repeat(mtf) + '☆'.repeat(5 - mtf);
+
+  // View analysis link
+  const viewBtn = `<button class="btn btn-ghost btn-sm" onclick="scrViewAnalysis('${esc(s.symbol)}')">View Full Analysis →</button>`;
+
+  return `<div class="scr-card ${dirCls}">
+    <div class="scr-card-hdr">
+      <div class="scr-rank">#${s.rank}</div>
+      <div>
+        <div class="scr-sym">${esc(s.symbol)}</div>
+        <div class="scr-name">${esc(s.company_name || '')} · ${esc(s.sector || '')}</div>
+      </div>
+      <div class="scr-score">Score ${s.score}</div>
+    </div>
+    ${tags ? `<div class="scr-tags">${tags}</div>` : ''}
+    <div class="scr-metrics">
+      <div>
+        <div class="scr-metric-lbl">CMP</div>
+        <div style="font-size:15px;font-weight:700">${inr(price.close, 2)}</div>
+        <div class="${chgCl}" style="font-size:11px">${chgAr} ${Math.abs(chgPct).toFixed(2)}%</div>
+      </div>
+      <div>
+        <div class="scr-metric-lbl">RVol</div>
+        <div style="font-weight:700;color:${rvol>=2?'var(--yellow)':'var(--text)'}">${rvol.toFixed(2)}x</div>
+        <div style="font-size:10px;color:var(--muted)">${esc(vol.label||'')}</div>
+      </div>
+      <div>
+        <div class="scr-metric-lbl">RSI (14D)</div>
+        <div style="font-weight:700;color:${(tech.rsi_14_daily||0)>70?'var(--red)':(tech.rsi_14_daily||0)<30?'var(--green)':'var(--text)'}">${num(tech.rsi_14_daily,1)}</div>
+        <div style="font-size:10px;color:var(--muted)">${mtfStars}</div>
+      </div>
+      <div>
+        <div class="scr-metric-lbl">Del%</div>
+        <div style="font-weight:700">${num(vol.delivery_pct,1)}%</div>
+        <div style="font-size:10px;color:var(--muted)">52W: ${num(price.from_52w_high_pct,1)}%</div>
+      </div>
+    </div>
+    ${newsHtml}
+    <div class="scr-trade-row">
+      <span class="scr-dir-${dirCls.slice(0,1)}">${dir}</span>
+      ${trade.entry_range ? `<span><b>Entry</b> ${esc(trade.entry_range)}</span>` : ''}
+      ${trade.stop_loss   ? `<span><b>SL</b> <span class="r">${inr(trade.stop_loss,1)}</span></span>` : ''}
+      ${trade.target_1    ? `<span><b>T1</b> <span class="g">${inr(trade.target_1,1)}</span></span>` : ''}
+      ${trade.risk_reward ? `<span style="color:var(--yellow);font-weight:700">R:R ${esc(trade.risk_reward)}</span>` : ''}
+      ${fiiHtml}
+      <div class="scr-actions">${viewBtn}</div>
+    </div>
+  </div>`;
+}
+
+function scrViewAnalysis(symbol) {
+  switchTab('search');
+  const inp = document.getElementById('saInput');
+  if (inp) {
+    inp.value = symbol;
+    onSaInput();
+    // Find the symbol in dropdown or select directly
+    const match = FNO_LIST.find(s => s.s === symbol);
+    if (match) {
+      _saSymbol = symbol;
+      document.getElementById('saBtn').disabled = false;
+      triggerStockAnalysis();
+    }
+  }
+}
+
+function scrSetSort(by, order) {
+  _scrSortBy    = by;
+  _scrSortOrder = order;
+  if (!_scrResults) return;
+  // Re-sort client-side
+  const res    = _scrResults.results || [];
+  const getVal = {
+    score:           s => s.score || 0,
+    relative_volume: s => s.volume?.relative_volume || 0,
+    rsi:             s => s.technicals?.rsi_14_daily || 0,
+    price_change:    s => Math.abs(s.price?.change_pct || 0),
+  }[by] || (s => s.score || 0);
+
+  res.sort((a, b) => order === 'desc' ? getVal(b) - getVal(a) : getVal(a) - getVal(b));
+  res.forEach((s, i) => s.rank = i + 1);
+  renderScrResults(_scrResults);
+}
+
 function togglePtGroup(id) {
   const body = document.getElementById(id);
   const icon = document.getElementById(id + '-icon');
@@ -2436,42 +2951,33 @@ function renderPtCard(t) {
   const isOpen   = t.status === 'OPEN';
   const isWin    = ['TARGET1_HIT','TARGET2_HIT'].includes(t.status);
   const isLoss   = t.status === 'STOPPED';
+  const isClosed = t.status === 'CLOSED';
   const cardCls  = isOpen ? 'open' : isWin ? 'win' : isLoss ? 'loss' : 'closed';
   const dirCls   = (t.direction||'').toLowerCase();
-  const statusLabel = {OPEN:'Open',TARGET1_HIT:'T1 Hit',TARGET2_HIT:'T2 Hit',STOPPED:'Stopped',CLOSED:'Closed'}[t.status] || esc(t.status||'');
+  const statusLabel = {
+    OPEN:'Open', TARGET1_HIT:'T1 Hit', TARGET2_HIT:'T2 Hit',
+    STOPPED:'Stopped', CLOSED:'Closed'
+  }[t.status] || esc(t.status||'');
   const stBadgeCls = isOpen ? 'pt-st-open' : isWin ? 'pt-st-win' : isLoss ? 'pt-st-loss' : 'pt-st-closed';
+
+  // P&L: use pnl_pct if available, else infer from status + target pcts
   let pnlPct = t.pnl_pct != null ? +t.pnl_pct : null;
   if (pnlPct == null && isWin) pnlPct = t.status === 'TARGET2_HIT' ? (t.target2_pct || t.target1_pct || null) : (t.target1_pct || null);
+  const pnlStr = pnlPct != null ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%' : (isOpen ? 'OPEN' : '—');
+  const pnlBadgeCls = isOpen ? 'open' : pnlPct != null && pnlPct >= 0 ? 'win' : 'loss';
 
-  // For OPEN trades: compute live P&L if current_price is available
-  let livePnlStr = '';
-  if (isOpen && t.current_price != null) {
-    const entry = t.entry_price || t.entry_low || t.cmp_at_signal;
-    if (entry) {
-      const dir = (t.direction||'').toUpperCase();
-      const rawPnl = dir === 'SHORT' ? (entry - t.current_price) : (t.current_price - entry);
-      const rawPct = (rawPnl / entry) * 100;
-      const sign   = rawPct >= 0 ? '+' : '';
-      livePnlStr   = `${sign}${rawPct.toFixed(2)}%`;
-      pnlPct       = rawPct;
-    }
-  }
-
-  const pnlStr = livePnlStr || (pnlPct != null ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%' : (isOpen ? 'OPEN' : '—'));
-  const pnlBadgeCls = isOpen ? (pnlPct != null ? (pnlPct >= 0 ? 'win' : 'loss') : 'open') : (pnlPct != null && pnlPct >= 0 ? 'win' : 'loss');
+  const genDate = t.generated_at ? t.generated_at.slice(0,10) : (t._file_date || '');
   const genTime = t.generated_at ? new Date(t.generated_at).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) : '';
-  const updTime = t.price_updated_at || '';
+
   return `<div class="pt-card ${cardCls}">
     <div class="pt-sym">${esc(t.symbol||'')}</div>
     <span class="pt-dir ${dirCls}">${esc(t.direction||'')}</span>
     <div class="pt-fields">
       <div class="pt-field"><span class="fkey">Entry</span><span class="fval">${t.entry_low!=null&&t.entry_high!=null?inr(t.entry_low,0)+'–'+inr(t.entry_high,0):t.cmp_at_signal!=null?inr(t.cmp_at_signal,0):'—'}</span></div>
-      ${isOpen&&t.current_price!=null?`<div class="pt-field"><span class="fkey">LTP${updTime?` <span style="font-size:9px;color:var(--muted)">${esc(updTime)}</span>`:''}` +
-        `</span><span class="fval y">${inr(t.current_price,2)}</span></div>`:''}
       <div class="pt-field"><span class="fkey">T1</span><span class="fval g">${t.target1!=null?inr(t.target1,0)+(t.target1_pct?' (+'+t.target1_pct+'%)':''):'—'}</span></div>
       <div class="pt-field"><span class="fkey">SL</span><span class="fval r">${t.stop_loss!=null?inr(t.stop_loss,0):'—'}</span></div>
-      ${t.holding?`<div class="pt-field"><span class="fkey">Hold</span><span class="fval" style="font-size:10px">${esc(t.holding)}</span></div>`:''}
       ${t.confidence?`<div class="pt-field"><span class="fkey">Conf</span><span class="fval ${confCls(t.confidence)}">${esc(t.confidence)}</span></div>`:''}
+      ${t.strategy?`<div class="pt-field"><span class="fkey">Strategy</span><span class="fval" style="font-size:10px">${esc(t.strategy)}</span></div>`:''}
       ${genTime?`<div class="pt-field"><span class="fkey">Time</span><span class="fval" style="font-size:10px;color:var(--muted)">${esc(genTime)}</span></div>`:''}
     </div>
     <span class="pt-status-badge ${stBadgeCls}">${esc(statusLabel)}</span>
