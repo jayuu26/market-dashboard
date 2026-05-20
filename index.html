@@ -2428,18 +2428,36 @@ function renderPtCard(t) {
   const stBadgeCls = isOpen ? 'pt-st-open' : isWin ? 'pt-st-win' : isLoss ? 'pt-st-loss' : 'pt-st-closed';
   let pnlPct = t.pnl_pct != null ? +t.pnl_pct : null;
   if (pnlPct == null && isWin) pnlPct = t.status === 'TARGET2_HIT' ? (t.target2_pct || t.target1_pct || null) : (t.target1_pct || null);
-  const pnlStr = pnlPct != null ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%' : (isOpen ? 'OPEN' : '—');
-  const pnlBadgeCls = isOpen ? 'open' : pnlPct != null && pnlPct >= 0 ? 'win' : 'loss';
+
+  // For OPEN trades: compute live P&L if current_price is available
+  let livePnlStr = '';
+  if (isOpen && t.current_price != null) {
+    const entry = t.entry_price || t.entry_low || t.cmp_at_signal;
+    if (entry) {
+      const dir = (t.direction||'').toUpperCase();
+      const rawPnl = dir === 'SHORT' ? (entry - t.current_price) : (t.current_price - entry);
+      const rawPct = (rawPnl / entry) * 100;
+      const sign   = rawPct >= 0 ? '+' : '';
+      livePnlStr   = `${sign}${rawPct.toFixed(2)}%`;
+      pnlPct       = rawPct;
+    }
+  }
+
+  const pnlStr = livePnlStr || (pnlPct != null ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%' : (isOpen ? 'OPEN' : '—'));
+  const pnlBadgeCls = isOpen ? (pnlPct != null ? (pnlPct >= 0 ? 'win' : 'loss') : 'open') : (pnlPct != null && pnlPct >= 0 ? 'win' : 'loss');
   const genTime = t.generated_at ? new Date(t.generated_at).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) : '';
+  const updTime = t.price_updated_at || '';
   return `<div class="pt-card ${cardCls}">
     <div class="pt-sym">${esc(t.symbol||'')}</div>
     <span class="pt-dir ${dirCls}">${esc(t.direction||'')}</span>
     <div class="pt-fields">
       <div class="pt-field"><span class="fkey">Entry</span><span class="fval">${t.entry_low!=null&&t.entry_high!=null?inr(t.entry_low,0)+'–'+inr(t.entry_high,0):t.cmp_at_signal!=null?inr(t.cmp_at_signal,0):'—'}</span></div>
+      ${isOpen&&t.current_price!=null?`<div class="pt-field"><span class="fkey">LTP${updTime?` <span style="font-size:9px;color:var(--muted)">${esc(updTime)}</span>`:''}` +
+        `</span><span class="fval y">${inr(t.current_price,2)}</span></div>`:''}
       <div class="pt-field"><span class="fkey">T1</span><span class="fval g">${t.target1!=null?inr(t.target1,0)+(t.target1_pct?' (+'+t.target1_pct+'%)':''):'—'}</span></div>
       <div class="pt-field"><span class="fkey">SL</span><span class="fval r">${t.stop_loss!=null?inr(t.stop_loss,0):'—'}</span></div>
+      ${t.holding?`<div class="pt-field"><span class="fkey">Hold</span><span class="fval" style="font-size:10px">${esc(t.holding)}</span></div>`:''}
       ${t.confidence?`<div class="pt-field"><span class="fkey">Conf</span><span class="fval ${confCls(t.confidence)}">${esc(t.confidence)}</span></div>`:''}
-      ${t.strategy?`<div class="pt-field"><span class="fkey">Strategy</span><span class="fval" style="font-size:10px">${esc(t.strategy)}</span></div>`:''}
       ${genTime?`<div class="pt-field"><span class="fkey">Time</span><span class="fval" style="font-size:10px;color:var(--muted)">${esc(genTime)}</span></div>`:''}
     </div>
     <span class="pt-status-badge ${stBadgeCls}">${esc(statusLabel)}</span>
