@@ -627,8 +627,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     </div>
     <!-- Stale warning (no data yet / first run) -->
     <div id="scrStaleWarn" class="scr-server-warn" style="display:none">
-      ⏳ Screener data not yet available. GitHub Actions runs every 30 min during market hours (9:00–15:30 IST).
-      Results will appear automatically after the first run.
+      ⏳ Screener data not yet available. GitHub Actions runs every 30 min during market hours and hourly until 7:30 PM IST (also Saturdays). Results will appear automatically after the first run.
     </div>
 
     <!-- Search Row -->
@@ -2734,7 +2733,7 @@ async function _loadScreenResult(screenName) {
     const r = await fetch(`${SCR_RAW}/${screenName}.json?t=${Date.now()}`,
       {signal: AbortSignal.timeout(15000)});
     if (!r.ok) throw new Error(r.status === 404
-      ? 'Screener data not ready yet — GitHub Actions runs every 30 min during market hours.'
+      ? 'Screener data not ready yet — runs every 30 min during market hours, hourly until 7:30 PM IST.'
       : `Fetch error ${r.status}`);
     const data = await r.json();
     _scrResults   = data;
@@ -2804,7 +2803,7 @@ function renderScrResults(data) {
   const genAt = data.generated_at ? new Date(data.generated_at) : null;
   const genStr = genAt ? genAt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}) + ' IST' : '';
   html += `<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0">
-    Pre-computed by GitHub Actions${genStr ? ' · refreshed ' + genStr : ''} · updates every 30 min during market hours
+    Pre-computed by GitHub Actions${genStr ? ' · refreshed ' + genStr : ''} · every 30 min in market hours, hourly until 7:30 PM IST
   </div>`;
 
   el.innerHTML = html;
