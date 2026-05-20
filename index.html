@@ -2701,13 +2701,23 @@ function _nlToScreenName(q) {
   return null;
 }
 
+/* ── Authenticated screener fetch (works for private repos) ─────────────── */
+async function _scrFetch(filename) {
+  const path = `screener/cache/results/${filename}`;
+  if (_tok) {
+    const fd = await ghGet(path);
+    return JSON.parse(b64dec(fd.content));
+  }
+  const r = await fetch(`${SCR_RAW}/${filename}?t=${Date.now()}`,
+    {signal: AbortSignal.timeout(12000)});
+  if (!r.ok) throw new Error(r.status === 404 ? 'no data' : `HTTP ${r.status}`);
+  return r.json();
+}
+
 /* ── Load meta.json to show freshness banner ────────────────────────────── */
 async function scrLoadMeta() {
   try {
-    const r = await fetch(`${SCR_RAW}/meta.json?t=${Date.now()}`,
-      {signal: AbortSignal.timeout(5000)});
-    if (!r.ok) throw new Error('no data');
-    const meta = await r.json();
+    const meta = await _scrFetch('meta.json');
 
     const genAt  = new Date(meta.generated_at);
     const ageMins = Math.round((Date.now() - genAt.getTime()) / 60000);
@@ -2720,7 +2730,13 @@ async function scrLoadMeta() {
     document.getElementById('scrFreshBanner').style.display = 'flex';
     document.getElementById('scrStaleWarn').style.display   = 'none';
     // Auto-load default screen on first visit
-    if (!_scrLastQuery) scrQuick('multi_tf_bullish', '📐 Multi-TF Bullish');
+    if (!_scrLastQuery) {
+      const defBtn = document.querySelector('.scr-qbtn[onclick*="multi_tf_bullish"]');
+      if (defBtn) { document.querySelectorAll('.scr-qbtn').forEach(b=>b.classList.remove('active')); defBtn.classList.add('active'); }
+      document.getElementById('scrInput').value = '📐 Multi-TF Bullish';
+      document.getElementById('scrClear').style.display = '';
+      _loadScreenResult('multi_tf_bullish');
+    }
   } catch(_) {
     document.getElementById('scrFreshBanner').style.display = 'none';
     document.getElementById('scrStaleWarn').style.display   = '';
@@ -2779,8 +2795,7 @@ async function _scrDispatch(tokenArg) {
     }
 
     // Poll meta.json every 15s for up to 5 min to detect new run
-    const priorMeta = await fetch(`${SCR_RAW}/meta.json?t=${Date.now()}`, {signal: AbortSignal.timeout(4000)})
-      .then(r => r.ok ? r.json() : null).catch(() => null);
+    const priorMeta = await _scrFetch('meta.json').catch(() => null);
     const priorTs = priorMeta ? new Date(priorMeta.generated_at).getTime() : 0;
 
     let elapsed = 0;
@@ -2796,9 +2811,8 @@ async function _scrDispatch(tokenArg) {
       if (subEl) subEl.textContent = `Elapsed: ${Math.round(elapsed/1000)}s — checking for new data…`;
 
       try {
-        const m = await fetch(`${SCR_RAW}/meta.json?t=${Date.now()}`, {signal: AbortSignal.timeout(5000)});
-        if (m.ok) {
-          const meta = await m.json();
+        const meta = await _scrFetch('meta.json').catch(() => null);
+        if (meta) {
           if (new Date(meta.generated_at).getTime() > priorTs + 5000) {
             clearInterval(pollId);
             const stEl = document.getElementById('scrRunStatus');
@@ -2885,13 +2899,11 @@ async function _loadScreenResult(screenName) {
   document.getElementById('scrLoadMsg').textContent = `Loading ${screenName.replace(/_/g,' ')}…`;
 
   try {
-    // cache-bust so browser doesn't serve a stale cached copy
-    const r = await fetch(`${SCR_RAW}/${screenName}.json?t=${Date.now()}`,
-      {signal: AbortSignal.timeout(15000)});
-    if (!r.ok) throw new Error(r.status === 404
-      ? 'Screener data not ready yet — runs every 30 min during market hours, hourly until 7:30 PM IST.'
-      : `Fetch error ${r.status}`);
-    const data = await r.json();
+    const data = await _scrFetch(`${screenName}.json`).catch(e => {
+      throw new Error(e.message === 'no data'
+        ? 'Screener data not ready yet — runs every 30 min during market hours, hourly until 7:30 PM IST.'
+        : e.message);
+    });
     _scrResults   = data;
     _scrLastQuery = screenName;
     loadEl.style.display = 'none';
