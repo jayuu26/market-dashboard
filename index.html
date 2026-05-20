@@ -3038,20 +3038,32 @@ function renderScrResults(data) {
     <span class="scr-stat">${data.passed_filters} stocks · ${data.total_universe||180} universe</span>
   </div>`;
 
-  for (const s of results) {
-    html += renderScrCard(s, intent);
-  }
-
   const genAt = data.generated_at ? new Date(data.generated_at) : null;
   const genStr = genAt ? genAt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}) + ' IST' : '';
+
+  // Stale price warning: if screener ran >2h ago AND current time is after 15:30 IST
+  const nowIST = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  const mktCloseToday = new Date(nowIST); mktCloseToday.setHours(15,30,0,0);
+  const isPostMarket = nowIST > mktCloseToday;
+  const ageMin = genAt ? Math.round((nowIST - genAt) / 60000) : 0;
+  if (genAt && isPostMarket && ageMin > 120) {
+    html = `<div style="background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.3);border-radius:8px;padding:8px 12px;font-size:12px;color:#fbbf24;margin-bottom:10px">
+      ⚠️ Prices shown below were captured at <b>${genStr}</b> (${ageMin}min ago) — not today's closing prices. Click <b>Refresh</b> or run the screener for updated data.
+    </div>` + html;
+  }
+
+  for (const s of results) {
+    html += renderScrCard(s, intent, genStr);
+  }
+
   html += `<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0">
-    Pre-computed by GitHub Actions${genStr ? ' · refreshed ' + genStr : ''} · every 30 min in market hours, hourly until 7:30 PM IST
+    Pre-computed by GitHub Actions${genStr ? ' · prices as of ' + genStr : ''} · every 30 min in market hours, hourly until 7:30 PM IST
   </div>`;
 
   el.innerHTML = html;
 }
 
-function renderScrCard(s, intent) {
+function renderScrCard(s, intent, priceAsOf) {
   const dir       = s.trade_suggestion?.direction || 'LONG';
   const dirCls    = dir === 'LONG' ? 'long' : 'short';
   const price     = s.price || {};
@@ -3143,7 +3155,7 @@ function renderScrCard(s, intent) {
     ${tags ? `<div class="scr-tags">${tags}</div>` : ''}
     <div class="scr-metrics">
       <div>
-        <div class="scr-metric-lbl">CMP</div>
+        <div class="scr-metric-lbl">Price ${priceAsOf ? `<span style="font-weight:400;opacity:.7">(${priceAsOf})</span>` : ''}</div>
         <div style="font-size:15px;font-weight:700">${inr(price.close, 2)}</div>
         <div class="${chgCl}" style="font-size:11px">${chgAr} ${Math.abs(chgPct).toFixed(2)}%</div>
       </div>
