@@ -621,13 +621,40 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   <div id="screenerTab" style="display:none">
 
     <!-- Freshness banner (shows last GitHub Actions run time) -->
-    <div id="scrFreshBanner" style="font-size:11px;color:var(--muted);padding:4px 0 6px;display:none">
+    <div id="scrFreshBanner" style="font-size:11px;color:var(--muted);padding:4px 0 6px;display:none;display:flex;align-items:center;gap:10px">
       <span id="scrFreshText"></span>
       &nbsp;·&nbsp; <a href="#" onclick="scrLoadMeta();return false" style="color:var(--yellow)">Refresh</a>
+      &nbsp;·&nbsp; <a href="#" onclick="scrRunNow();return false" style="color:#4ade80;font-weight:600">⚡ Run Now</a>
     </div>
     <!-- Stale warning (no data yet / first run) -->
     <div id="scrStaleWarn" class="scr-server-warn" style="display:none">
-      ⏳ Screener data not yet available. GitHub Actions runs every 30 min during market hours and hourly until 7:30 PM IST (also Saturdays). Results will appear automatically after the first run.
+      ⏳ Screener data not yet available.
+      <a href="#" onclick="scrRunNow();return false" style="color:#4ade80;font-weight:600;margin-left:6px">⚡ Run Now</a>
+      <span style="color:var(--muted);font-size:10px;margin-left:4px">(triggers GitHub Actions — results in ~2 min)</span>
+    </div>
+
+    <!-- Run Now token modal -->
+    <div id="scrTokenModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+      <div style="background:#1e2433;border:1px solid #334;border-radius:10px;padding:24px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px">⚡ Run Screener Now</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+          Paste a GitHub Personal Access Token with <b>Actions: Read &amp; Write</b> permission.<br>
+          It is stored only in your browser (localStorage) and never sent anywhere except GitHub API.
+        </div>
+        <div style="font-size:11px;color:#888;margin-bottom:6px">
+          Create one at: <b>github.com → Settings → Developer settings → Fine-grained tokens</b><br>
+          Repository: <b>jayuu26/Market-Study</b> · Permission: <b>Actions → Read and write</b>
+        </div>
+        <input id="scrTokenInput" type="password" placeholder="github_pat_…"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:6px;border:1px solid #445;background:#0d1117;color:#e6edf3;font-family:monospace;font-size:12px;margin-bottom:12px">
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="document.getElementById('scrTokenModal').style.display='none'"
+            style="padding:6px 16px;border-radius:6px;border:1px solid #445;background:transparent;color:#aaa;cursor:pointer">Cancel</button>
+          <button onclick="_scrDispatch()"
+            style="padding:6px 16px;border-radius:6px;border:none;background:#4ade80;color:#000;font-weight:700;cursor:pointer">Run</button>
+        </div>
+        <div id="scrTokenErr" style="color:#f87171;font-size:11px;margin-top:8px;display:none"></div>
+      </div>
     </div>
 
     <!-- Search Row -->
@@ -2670,6 +2697,108 @@ async function scrLoadMeta() {
   } catch(_) {
     document.getElementById('scrFreshBanner').style.display = 'none';
     document.getElementById('scrStaleWarn').style.display   = '';
+  }
+}
+
+/* ── On-demand trigger via GitHub Actions dispatch API ─────────────────── */
+const _GH_DISPATCH_URL = `https://api.github.com/repos/${REPO}/actions/workflows/screener_precompute.yml/dispatches`;
+const _SCR_TOKEN_KEY   = 'scr_gh_token';
+
+function scrRunNow() {
+  const saved = localStorage.getItem(_SCR_TOKEN_KEY);
+  if (saved) { _scrDispatch(saved); return; }
+  // Show token modal
+  document.getElementById('scrTokenInput').value = '';
+  document.getElementById('scrTokenErr').style.display = 'none';
+  document.getElementById('scrTokenModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('scrTokenInput').focus(), 80);
+}
+
+async function _scrDispatch(tokenArg) {
+  const modal    = document.getElementById('scrTokenModal');
+  const errEl    = document.getElementById('scrTokenErr');
+  const token    = tokenArg || document.getElementById('scrTokenInput').value.trim();
+  if (!token) { errEl.textContent = 'Please enter a token.'; errEl.style.display=''; return; }
+
+  // Save so user doesn't need to re-enter
+  localStorage.setItem(_SCR_TOKEN_KEY, token);
+  modal.style.display = 'none';
+
+  // Show progress in results area
+  const resEl = document.getElementById('scrResults');
+  resEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
+    <div style="font-size:28px;margin-bottom:10px">⚡</div>
+    <div id="scrRunStatus" style="font-size:14px;font-weight:600;color:#4ade80">Triggering GitHub Actions…</div>
+    <div id="scrRunSub" style="font-size:12px;margin-top:6px;color:#888">This takes about 2–3 minutes. Results will load automatically.</div>
+    <div id="scrRunBar" style="height:3px;background:#4ade80;width:0%;margin:16px auto;max-width:300px;border-radius:2px;transition:width .5s"></div>
+  </div>`;
+
+  try {
+    const resp = await fetch(_GH_DISPATCH_URL, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'main' }),
+    });
+
+    if (resp.status === 401 || resp.status === 403) {
+      localStorage.removeItem(_SCR_TOKEN_KEY);
+      resEl.innerHTML = `<div style="color:#f87171;text-align:center;padding:30px">
+        Token rejected (${resp.status}). <a href="#" onclick="scrRunNow();return false" style="color:#4ade80">Try again with a new token</a></div>`;
+      return;
+    }
+    if (!resp.ok) {
+      resEl.innerHTML = `<div style="color:#f87171;text-align:center;padding:30px">GitHub API error ${resp.status}. Try again.</div>`;
+      return;
+    }
+
+    // Poll meta.json every 15s for up to 5 min to detect new run
+    const priorMeta = await fetch(`${SCR_RAW}/meta.json?t=${Date.now()}`, {signal: AbortSignal.timeout(4000)})
+      .then(r => r.ok ? r.json() : null).catch(() => null);
+    const priorTs = priorMeta ? new Date(priorMeta.generated_at).getTime() : 0;
+
+    let elapsed = 0;
+    const POLL_MS = 15000, MAX_MS = 300000;
+    document.getElementById('scrRunStatus').textContent = 'Running… checking for new results';
+
+    const pollId = setInterval(async () => {
+      elapsed += POLL_MS;
+      const pct = Math.min(95, Math.round(elapsed / MAX_MS * 100));
+      const barEl = document.getElementById('scrRunBar');
+      if (barEl) barEl.style.width = pct + '%';
+      const subEl = document.getElementById('scrRunSub');
+      if (subEl) subEl.textContent = `Elapsed: ${Math.round(elapsed/1000)}s — checking for new data…`;
+
+      try {
+        const m = await fetch(`${SCR_RAW}/meta.json?t=${Date.now()}`, {signal: AbortSignal.timeout(5000)});
+        if (m.ok) {
+          const meta = await m.json();
+          if (new Date(meta.generated_at).getTime() > priorTs + 5000) {
+            clearInterval(pollId);
+            const stEl = document.getElementById('scrRunStatus');
+            if (stEl) stEl.textContent = 'Done! Loading results…';
+            if (barEl) barEl.style.width = '100%';
+            await scrLoadMeta();
+            // Reload whichever screen was last active
+            const activeBtn = document.querySelector('.scr-qbtn.active');
+            if (activeBtn) {
+              const m = activeBtn.getAttribute('onclick').match(/'([^']+)'/);
+              if (m) { setTimeout(() => _loadScreenResult(m[1]), 400); return; }
+            }
+            resEl.innerHTML = `<div style="text-align:center;padding:30px;color:#4ade80;font-size:14px;font-weight:600">
+              ✅ Screener refreshed! Click any quick filter above to view results.</div>`;
+          }
+        }
+      } catch(_) {}
+
+      if (elapsed >= MAX_MS) {
+        clearInterval(pollId);
+        resEl.innerHTML = `<div style="color:#f87171;text-align:center;padding:30px">
+          Timed out waiting for results. The workflow may still be running — try refreshing in a minute.</div>`;
+      }
+    }, POLL_MS);
+
+  } catch(e) {
+    resEl.innerHTML = `<div style="color:#f87171;text-align:center;padding:30px">Error: ${esc(e.message)}</div>`;
   }
 }
 
