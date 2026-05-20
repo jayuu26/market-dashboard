@@ -398,6 +398,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .scr-tag-ban{background:var(--card2);color:var(--muted)}
 .scr-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px;padding:0 14px 10px;font-size:12px}
 .scr-metric-lbl{font-size:10px;color:var(--muted);margin-bottom:1px}
+.scr-metrics-2{display:grid;grid-template-columns:repeat(4,1fr);gap:3px 10px;padding:0 14px 10px;font-size:11px;border-top:1px solid rgba(255,255,255,.05);padding-top:8px}
+.scr-cat-badge{flex-shrink:0;padding:2px 5px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(99,102,241,.12);color:#818cf8}
 .scr-news-row{padding:0 14px 10px;font-size:11px;display:flex;align-items:flex-start;gap:8px}
 .scr-news-badge{flex-shrink:0;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700}
 .scr-news-pos{background:rgba(16,185,129,.15);color:var(--green)}
@@ -908,6 +910,7 @@ function inr(n, dp=0) {
 }
 function num(n,dp=2){if(n==null||isNaN(+n))return'—';return(+n).toLocaleString('en-IN',{minimumFractionDigits:dp,maximumFractionDigits:dp});}
 function chgCls(n){return n==null?'':n>=0?'g':'r';}
+function fmtVol(v){if(!v||v===0)return'—';if(v>=1e7)return(v/1e7).toFixed(2)+' Cr';if(v>=1e5)return(v/1e5).toFixed(1)+' L';return v.toLocaleString('en-IN');}
 function arr(n){return n==null?'':n>=0?'▲':'▼';}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function confCls(c){if(!c)return'cM';const u=c.toUpperCase();if(u==='HIGH')return'cH';if(u.includes('MEDIUM-HIGH')||u.includes('MEDIUM HIGH'))return'cMH';return'cM';}
@@ -1718,7 +1721,6 @@ const FNO_LIST = [
   {s:'MARICO',    n:'Marico Ltd',                        sec:'FMCG'},
   {s:'TATACONSUM',n:'Tata Consumer Products Ltd',        sec:'FMCG'},
   {s:'GODREJCP',  n:'Godrej Consumer Products',         sec:'FMCG'},
-  {s:'ITC',       n:'ITC Ltd',                           sec:'FMCG'},
   {s:'DLF',       n:'DLF Ltd',                           sec:'Realty'},
   {s:'GODREJPROP',n:'Godrej Properties Ltd',             sec:'Realty'},
   {s:'OBEROIRLTY',n:'Oberoi Realty Ltd',                 sec:'Realty'},
@@ -1750,6 +1752,62 @@ const FNO_LIST = [
   {s:'PVRINOX',   n:'PVR INOX Ltd',                      sec:'Entertainment'},
   {s:'IDEA',      n:'Vodafone Idea Ltd',                 sec:'Telecom'},
   {s:'ADANIENT',  n:'Adani Enterprises Ltd',             sec:'Conglomerate'},
+  // Finance (NBFC)
+  {s:'M&MFIN',    n:'Mahindra & Mahindra Financial Services',sec:'NBFC'},
+  {s:'MUTHOOTFIN',n:'Muthoot Finance Ltd',                   sec:'NBFC'},
+  // IT
+  {s:'KPITTECH',  n:'KPIT Technologies Ltd',                 sec:'IT'},
+  // Pharma
+  {s:'ABBOTINDIA',n:'Abbott India Ltd',                      sec:'Pharma'},
+  {s:'ALKEM',     n:'Alkem Laboratories Ltd',                sec:'Pharma'},
+  {s:'GLAND',     n:'Gland Pharma Ltd',                      sec:'Pharma'},
+  // Auto Ancillary
+  {s:'MOTHERSON', n:'Samvardhana Motherson International Ltd',sec:'Auto Ancillary'},
+  {s:'BALKRISIND',n:'Balkrishna Industries Ltd',             sec:'Auto Ancillary'},
+  // Energy & Power
+  {s:'OIL',       n:'Oil India Ltd',                         sec:'Energy'},
+  {s:'PETRONET',  n:'Petronet LNG Ltd',                      sec:'Energy'},
+  {s:'TORNTPOWER',n:'Torrent Power Ltd',                     sec:'Power'},
+  {s:'CESC',      n:'CESC Ltd',                              sec:'Power'},
+  {s:'NHPC',      n:'NHPC Ltd',                              sec:'Power'},
+  {s:'SJVN',      n:'SJVN Ltd',                              sec:'Power'},
+  // Metals
+  {s:'NATIONALUM',n:'National Aluminium Company Ltd',        sec:'Metals'},
+  {s:'APLAPOLLO', n:'APL Apollo Tubes Ltd',                  sec:'Metals'},
+  {s:'HINDCOPPER',n:'Hindustan Copper Ltd',                  sec:'Metals'},
+  // FMCG
+  {s:'COLPAL',    n:'Colgate-Palmolive (India) Ltd',         sec:'FMCG'},
+  {s:'EMAMILTD',  n:'Emami Ltd',                             sec:'FMCG'},
+  {s:'UBL',       n:'United Breweries Ltd',                  sec:'FMCG'},
+  {s:'MCDOWELL-N',n:'United Spirits Ltd',                    sec:'FMCG'},
+  // Realty
+  {s:'PHOENIXLTD',n:'Phoenix Mills Ltd',                     sec:'Realty'},
+  {s:'BRIGADE',   n:'Brigade Enterprises Ltd',               sec:'Realty'},
+  {s:'MAHLIFE',   n:'Mahindra Lifespace Developers Ltd',     sec:'Realty'},
+  {s:'SOBHA',     n:'Sobha Ltd',                             sec:'Realty'},
+  // Cement
+  {s:'JKCEMENT',  n:'JK Cement Ltd',                        sec:'Cement'},
+  {s:'HEIDELBERG',n:'HeidelbergCement India Ltd',            sec:'Cement'},
+  // Defence & PSU
+  {s:'BEML',      n:'BEML Ltd',                              sec:'Defence'},
+  {s:'COCHINSHIP',n:'Cochin Shipyard Ltd',                   sec:'Defence'},
+  {s:'GRSE',      n:'Garden Reach Shipbuilders & Engineers', sec:'Defence'},
+  // Chemicals & Pipes
+  {s:'AARTIIND',  n:'Aarti Industries Ltd',                  sec:'Chemicals'},
+  {s:'ASTRAL',    n:'Astral Ltd',                            sec:'Chemicals'},
+  // Healthcare
+  {s:'NH',        n:'Narayana Hrudayalaya Ltd',              sec:'Healthcare'},
+  // Consumer / QSR
+  {s:'DEVYANI',   n:'Devyani International Ltd',             sec:'QSR'},
+  {s:'SAPPHIRE',  n:'Sapphire Foods India Ltd',              sec:'QSR'},
+  // Others
+  {s:'TATACHEM',  n:'Tata Chemicals Ltd',                    sec:'Chemicals'},
+  {s:'CONCOR',    n:'Container Corp of India Ltd',           sec:'Logistics'},
+  {s:'WHIRLPOOL', n:'Whirlpool of India Ltd',                sec:'Consumer Durables'},
+  {s:'AMBER',     n:'Amber Enterprises India Ltd',           sec:'Electronics'},
+  {s:'KALYANKJIL',n:'Kalyan Jewellers India Ltd',            sec:'Retail'},
+  {s:'MFSL',      n:'Max Financial Services Ltd',            sec:'Insurance'},
+  {s:'STAR',      n:'Star Health and Allied Insurance Co',   sec:'Insurance'},
 ];
 // Dedupe by symbol
 const FNO_MAP = {};
@@ -3036,6 +3094,27 @@ function renderScrCard(s, intent) {
   // View analysis link
   const viewBtn = `<button class="btn btn-ghost btn-sm" onclick="scrViewAnalysis('${esc(s.symbol)}')">View Full Analysis →</button>`;
 
+  // Second metrics row: volume details + breakout level
+  const oiChg = vol.oi_change_pct || 0;
+  const oiColor = oiChg > 0 ? 'var(--green)' : oiChg < 0 ? 'var(--red)' : 'var(--muted)';
+  const boLevelHtml = bo.breakout_level
+    ? `<div style="font-weight:700;color:var(--green)">${inr(bo.breakout_level,1)}</div><div style="font-size:10px;color:var(--muted)">${esc(bo.pattern||'')}</div>`
+    : `<div style="color:var(--muted)">—</div>`;
+
+  // Enhanced news with source + catalyst
+  let newsHtml2 = '';
+  if (news.has_news_24h && news.headline) {
+    const sentCls = news.sentiment === 'positive' ? 'scr-news-pos' : news.sentiment === 'negative' ? 'scr-news-neg' : 'scr-news-neu';
+    const sentLbl = news.sentiment === 'positive' ? '📈 +ve' : news.sentiment === 'negative' ? '📉 -ve' : '📄 Neutral';
+    const catLbl  = news.catalyst_type && news.catalyst_type !== 'other' ? news.catalyst_type.replace(/_/g,' ') : '';
+    const srcHtml = news.source ? `<span style="color:var(--muted);font-size:10px"> — ${esc(news.source)}</span>` : '';
+    newsHtml2 = `<div class="scr-news-row">
+      <span class="scr-news-badge ${sentCls}">${esc(sentLbl)}</span>
+      ${catLbl ? `<span class="scr-cat-badge">${esc(catLbl)}</span>` : ''}
+      <span>${esc(news.headline)}${srcHtml}</span>
+    </div>`;
+  }
+
   return `<div class="scr-card ${dirCls}">
     <div class="scr-card-hdr">
       <div class="scr-rank">#${s.rank}</div>
@@ -3068,7 +3147,25 @@ function renderScrCard(s, intent) {
         <div style="font-size:10px;color:var(--muted)">52W: ${num(price.from_52w_high_pct,1)}%</div>
       </div>
     </div>
-    ${newsHtml}
+    <div class="scr-metrics-2">
+      <div>
+        <div class="scr-metric-lbl">Today Vol</div>
+        <div style="font-weight:600">${fmtVol(vol.today)}</div>
+      </div>
+      <div>
+        <div class="scr-metric-lbl">20D Avg Vol</div>
+        <div style="font-weight:600">${fmtVol(vol.avg_20d)}</div>
+      </div>
+      <div>
+        <div class="scr-metric-lbl">OI Chg%</div>
+        <div style="font-weight:600;color:${oiColor}">${oiChg !== 0 ? (oiChg > 0 ? '+' : '') + oiChg.toFixed(1) + '%' : '—'}</div>
+      </div>
+      <div>
+        <div class="scr-metric-lbl">Breakout Lvl</div>
+        ${boLevelHtml}
+      </div>
+    </div>
+    ${newsHtml2}
     <div class="scr-trade-row">
       <span class="scr-dir-${dirCls.slice(0,1)}">${dir}</span>
       ${trade.entry_range ? `<span><b>Entry</b> ${esc(trade.entry_range)}</span>` : ''}
