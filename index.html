@@ -195,10 +195,12 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 #toast.info{border-color:var(--blue);color:var(--blue)}
 
 /* ─── Tab Bar ──────────────────────────────────────────────────────────── */
-.tab-bar{display:flex;gap:2px;padding:0 16px 0;border-bottom:1px solid var(--border);background:var(--card);overflow-x:auto}
+.tab-bar{display:flex;gap:2px;padding:0 16px 0;border-bottom:1px solid var(--border);background:var(--card);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tab-bar::-webkit-scrollbar{display:none}
 .tab-btn{background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;font-family:inherit;padding:11px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
 .tab-btn:hover{color:var(--text)}
 .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-s{display:none}
 
 /* ─── Stock Search Tab ──────────────────────────────────────────────────── */
 #stockTab{display:none}
@@ -326,6 +328,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 /* ─── Paper Trades Tab ──────────────────────────────────────────────────── */
 .pt-perf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
 .pt-perf-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
+.pt-summ-stats{font-size:12px;font-weight:400;color:var(--muted)}
 .pt-perf-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px}
 .pt-perf-val{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
 .pt-date-group{margin-bottom:14px}
@@ -473,8 +476,16 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   .sa-strikes-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .sa-strikes{min-width:360px}
 
-  /* Tab bar */
-  .tab-btn{font-size:12px;padding:10px 10px}
+  /* Tab bar — short labels so all 5 tabs fit on screen */
+  .tab-btn{font-size:11px;padding:10px 9px}
+  .tab-l{display:none}
+  .tab-s{display:inline}
+  /* Run pills — compact */
+  .run-pill{font-size:10px;padding:2px 6px}
+  .run-selector{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .run-selector::-webkit-scrollbar{display:none}
+  /* Performance summary stats on own line */
+  .pt-summ-stats{display:block;font-size:11px;margin-top:3px}
 
   /* Search row — button full width on mobile */
   .sa-search-row{flex-direction:column}
@@ -593,10 +604,10 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 
 <!-- Tab Bar -->
 <div id="tabBar" class="tab-bar">
-  <button class="tab-btn active" id="tabMarket"   onclick="switchTab('market')">📊 Market Analysis</button>
+  <button class="tab-btn active" id="tabMarket"   onclick="switchTab('market')"><span class="tab-l">📊 Market Analysis</span><span class="tab-s">📊 Market</span></button>
   <button class="tab-btn"        id="tabIntraday" onclick="switchTab('intraday')">⚡ Intraday</button>
-  <button class="tab-btn"        id="tabSearch"   onclick="switchTab('search')">🔍 Stock Analysis</button>
-  <button class="tab-btn"        id="tabPaper"    onclick="switchTab('paper')">📋 Paper Trades</button>
+  <button class="tab-btn"        id="tabSearch"   onclick="switchTab('search')"><span class="tab-l">🔍 Stock Analysis</span><span class="tab-s">🔍 Stocks</span></button>
+  <button class="tab-btn"        id="tabPaper"    onclick="switchTab('paper')"><span class="tab-l">📋 Paper Trades</span><span class="tab-s">📋 Trades</span></button>
   <button class="tab-btn"        id="tabScreener" onclick="switchTab('screener')">🧲 Screener</button>
 </div>
 
@@ -2664,7 +2675,7 @@ function renderPaperTrades(trades) {
 
   // ── Performance Summary ──
   html += `<div class="sa-card" style="margin-bottom:14px">
-    <div class="sa-card-title">Performance Summary — ${perf.total} total · ${perf.closed} closed · ${trades.filter(t=>t.status==='OPEN').length} open</div>
+    <div class="sa-card-title">Performance Summary <span class="pt-summ-stats">— ${perf.total} total · ${perf.closed} closed · ${trades.filter(t=>t.status==='OPEN').length} open</span></div>
     <div class="pt-perf-grid">
       <div class="pt-perf-cell">
         <div class="pt-perf-label">Win Rate</div>
