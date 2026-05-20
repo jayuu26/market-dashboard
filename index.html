@@ -198,9 +198,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .tab-bar{display:flex;gap:2px;padding:0 16px 0;border-bottom:1px solid var(--border);background:var(--card);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .tab-bar::-webkit-scrollbar{display:none}
 .tab-btn{background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;font-family:inherit;padding:11px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
+.tab-s{display:none}
 .tab-btn:hover{color:var(--text)}
 .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
-.tab-s{display:none}
 
 /* ─── Stock Search Tab ──────────────────────────────────────────────────── */
 #stockTab{display:none}
@@ -2431,14 +2431,19 @@ function renderSaTechnicals(d) {
   const ema200St= indStatus(cmp && t.ema200 ? (cmp - t.ema200) : null, 'ema');
   const bbSt   = indStatus(t.bb_pctB, 'bb');
   const mtfTfs = ['weekly','daily','4h','1h'];
+  // Re-sort AI-returned levels by their value relative to CMP so labels are always correct
+  const _rawLvls = [levels.resistance2, levels.resistance1, levels.support1, levels.support2]
+    .filter(v => v != null && v > 0);
+  const _above = _rawLvls.filter(v => cmp == null || v > cmp).sort((a,b) => b - a);
+  const _below = _rawLvls.filter(v => cmp != null && v <= cmp).sort((a,b) => a - b);
   const allLevels = [
-    {l:'Resistance 2', v:levels.resistance2, cls:'r'},
-    {l:'Resistance 1', v:levels.resistance1, cls:'r'},
+    _above[0] != null ? {l:'Resistance 2', v:_above[0], cls:'r'} : null,
+    _above[1] != null ? {l:'Resistance 1', v:_above[1], cls:'r'} : null,
     {l:'Current Price', v:cmp, cls:'current', special:true},
-    {l:'Support 1', v:levels.support1, cls:'g'},
-    {l:'Support 2', v:levels.support2, cls:'g'},
+    _below.length > 0 ? {l:'Support 1', v:_below[_below.length-1], cls:'g'} : null,
+    _below.length > 1 ? {l:'Support 2', v:_below[_below.length-2], cls:'g'} : null,
     {l:'Stop Loss', v:d.signal?.stop_loss, cls:'r'},
-  ].filter(x => x.v != null);
+  ].filter(x => x != null && x.v != null);
   return `<div class="sa-card">
     <div class="sa-card-title">Technical Analysis</div>
     <div class="sa-ind-grid">
