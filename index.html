@@ -321,6 +321,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .id-progress-fill{height:100%;border-radius:3px;transition:width .3s}
 .id-eval-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
 .id-eval-row:last-child{border-bottom:none}
+.id-rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px;margin-bottom:8px}
 
 /* ─── Paper Trades Tab ──────────────────────────────────────────────────── */
 .pt-perf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
@@ -483,6 +484,21 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 
   /* Chip row */
   .sa-chips{gap:4px}
+
+  /* ─── Intraday tab ─── */
+  .id-status-bar{grid-template-columns:repeat(2,1fr)}
+  .id-eval-row{flex-wrap:wrap;gap:2px 8px}
+  .sa-chip{padding:5px 12px;font-size:12px}
+
+  /* ─── Paper Trading tab ─── */
+  .pt-perf-grid{grid-template-columns:repeat(3,1fr)}
+  .pt-date-hdr{flex-wrap:wrap;gap:4px 8px}
+  .pt-card{flex-wrap:wrap;align-items:center;gap:4px 8px;padding:10px 12px}
+  .pt-sym{min-width:unset;flex-shrink:0}
+  .pt-dir{flex-shrink:0;margin-right:auto}
+  .pt-fields{order:10;flex-basis:100%;width:100%;gap:6px 10px}
+  .pt-status-badge{flex-shrink:0}
+  .pt-pnl-badge{margin-left:0;flex-shrink:0}
 }
 
 /* Small mobile ≤420px — collapse to single column where density is too high */
@@ -508,6 +524,15 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   /* Cards extra tight */
   .sa-card{padding:10px}
   .idx-card{padding:10px 12px}
+
+  /* ─── Paper Trading ─── */
+  .pt-perf-grid{grid-template-columns:repeat(2,1fr)}
+  .pt-perf-val{font-size:14px}
+  .pt-strat-row{gap:4px}
+  .pt-strat-badge{padding:4px 8px;font-size:10px}
+
+  /* ─── Intraday rec card grid ─── */
+  .id-rec-grid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -2025,7 +2050,7 @@ function renderIntradayRecCard(rec) {
       <div style="font-size:11px;color:var(--muted)">${esc(rec.strategy||'').replace('_',' ')}</div>
       ${conf != null ? `<div style="margin-left:auto;font-size:11px"><b>HIGH ${conf}%</b></div>` : ''}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px;margin-bottom:8px">
+    <div class="id-rec-grid">
       <div><span style="color:var(--muted)">Entry</span><br><b>${rec.entry_range ? inr(rec.entry_range[0],0)+'–'+inr(rec.entry_range[1],0) : '—'}</b></div>
       <div><span style="color:var(--muted)">Stop Loss</span><br><b class="r">${rec.stop_loss!=null?inr(rec.stop_loss,0):'—'}</b></div>
       <div><span style="color:var(--muted)">R:R</span><br><b class="y">${esc(rec.risk_reward||'—')}</b></div>
