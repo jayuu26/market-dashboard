@@ -1864,6 +1864,15 @@ function startIdClock() {
   }, 1000);
 }
 
+function intradayChipLabel(t) {
+  const [h,m] = t.split(':').map(Number), v = h*60+m;
+  if (v < 11*60)      return `🟢 ${t}`;
+  if (v < 13*60)      return `🔵 ${t}`;
+  if (v < 14*60+30)   return `⚪ ${t}`;
+  if (v < 15*60+15)   return `🟡 ${t}`;
+  return `🔴 ${t}`;
+}
+
 async function loadIntradayTab() {
   startIdClock();
   const sess = getIntradaySession();
@@ -1886,7 +1895,7 @@ async function loadIntradayTab() {
       runBar.innerHTML = '<span class="sa-chip-lbl">Today\'s runs:</span>' +
         todayFiles.map((f,i) => {
           const time = f.name.replace(today+'_','').replace('.json','').replace(/(\d{2})(\d{2})/,'$1:$2');
-          return `<button class="sa-chip" onclick="loadIntradayRun('${esc(f.name)}')">${time}</button>`;
+          return `<button class="sa-chip" onclick="loadIntradayRun('${esc(f.name)}')">${intradayChipLabel(time)}</button>`;
         }).join('');
       // Auto-load latest run
       await loadIntradayRun(todayFiles[0].name);
