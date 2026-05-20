@@ -784,6 +784,20 @@ async function loadFileList() {
 }
 
 /* ── Nav ───────────────────────────────────────────────────────────────── */
+function sessionLabel(time){
+  // time is "HH:MM" IST
+  const [h,m]=time.split(':').map(Number), t=h*60+m;
+  if(t < 10*60)    return 'Pre-Mkt';
+  if(t < 13*60)    return 'Mid-Sess';
+  if(t < 15*60+30) return 'EOD';
+  return 'Post-Mkt';
+}
+// Pick the best default run index: first run that has the pre-market label
+// (earliest run of the day) because post-market often has 0 setups.
+function bestRunIdx(runs){
+  // Prefer first run (pre-market / earliest) — it always has data from live prices
+  return 0;
+}
 function renderNav(){
   const date=_dates[_dIdx], runs=_byDate[date];
   document.getElementById('datePicker').value=date;
@@ -791,24 +805,24 @@ function renderNav(){
   sel.style.display='flex';
   sel.innerHTML=runs.map((r,i)=>
     `<span class="run-pill ${i===_rIdx?'active':''}" onclick="selectRun(${i})">` +
-    `Run ${i+1} (${r.time})` +
+    `${sessionLabel(r.time)} (${r.time})` +
     `<button class="run-del-btn" title="Delete this run" onclick="event.stopPropagation();deleteRun(${i})">🗑</button>` +
     `</span>`
   ).join('');
 }
 function onDateChange(){
   const v=document.getElementById('datePicker').value, i=_dates.indexOf(v);
-  if(i>=0){_dIdx=i;_rIdx=_byDate[v].length-1;renderNav();loadAndRender();}
+  if(i>=0){_dIdx=i;_rIdx=bestRunIdx(_byDate[v]);renderNav();loadAndRender();}
   else toast('No analysis for '+v,'err');
 }
 function shiftDate(d){
   const n=_dIdx+d;
   if(n<0||n>=_dates.length) return toast('No more dates','info');
-  _dIdx=n;_rIdx=_byDate[_dates[n]].length-1;renderNav();loadAndRender();
+  _dIdx=n;_rIdx=bestRunIdx(_byDate[_dates[n]]);renderNav();loadAndRender();
 }
 function goToday(){
   if(!_dates.length) return;
-  _dIdx=0;_rIdx=_byDate[_dates[0]].length-1;renderNav();loadAndRender();
+  _dIdx=0;_rIdx=bestRunIdx(_byDate[_dates[0]]);renderNav();loadAndRender();
 }
 function selectRun(idx){_rIdx=idx;renderNav();loadAndRender();}
 
@@ -1285,7 +1299,7 @@ async function init(){
     }
     const todayIST=new Intl.DateTimeFormat('sv',{timeZone:'Asia/Kolkata'}).format(new Date());
     const ti=_dates.indexOf(todayIST);
-    _dIdx=ti>=0?ti:0;_rIdx=_byDate[_dates[_dIdx]].length-1;
+    _dIdx=ti>=0?ti:0;_rIdx=bestRunIdx(_byDate[_dates[_dIdx]]);
     renderNav();
     await Promise.all([loadAndRender(),loadSchedule(),pollStatus()]);
     _pollTmr=setInterval(pollStatus,30000);
